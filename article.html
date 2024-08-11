@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>hjtv6 | 文章</title>
+	<link href="ht.css" rel="stylesheet" type="text/css">
+	<style>
+        body {
+            color: white;
+            background-color: black; /* 默认字颜色 */
+        }
+		body {
+            font-family: Arial, sans-serif;
+        }
+        .article-list {
+            margin: 20px 0;
+        }
+        .article-item {
+            margin: 10px 0;
+        }
+        .article-item a {
+            text-decoration: none;
+            color: blue;
+        }
+        .article-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body style="background-color: #000222">
+	<ul>
+	  <li><a href="index.html">主页</a></li>
+	  <li><a href="news.html">新闻</a></li>
+	  <li><a class="active" href="article.html">文章</a></li>
+	  <li><a href="about.html">关于</a></li>
+	</ul>
+	<br>
+	<br>
+	<br>
+	<br>
+	<h1>HJTV</h1>
+	<br>
+	<br>
+	<br>
+	<br>
+	<div id="article-list" class="article-list">
+		<!-- some -->
+    </div>
+	<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const articleList = document.getElementById('article-list');
+
+            // Fetch list of articles from the server
+            fetch('/files')
+                .then(response => response.json())
+                .then(files => {
+                    files.forEach(file => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'article-item';
+                        const link = document.createElement('a');
+                        link.href = `article/${file}`;
+                        link.textContent = file;
+                        itemDiv.appendChild(link);
+                        articleList.appendChild(itemDiv);
+                    });
+                })
+                .catch(error => console.error('Error fetching files:', error));
+        });
+    </script>
+</body>
+</html>

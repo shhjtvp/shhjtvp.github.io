@@ -1,0 +1,77 @@
+body {
+  padding: 20px; 
+  box-sizing: border-box;
+  animation: fadeInUp 3s ease-out; /* 应用移动动画 */
+}
+
+/* 渐显向上移动动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0; /* 透明 */
+    transform: translateY(50px); /* 从下方开始 */
+  }
+  to {
+    opacity: 1; /* 不透明 */
+    transform: translateY(0); 
+  }
+}
+
+
+/* 顶栏 */
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000000;/* 主背景颜色 */
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+li a:hover:not(.active) {/* 鼠标悬停 */
+    background-color: #111;
+}
+
+.active {/* 被选中的选项 */
+    background-color: #001EFF;
+}
+
+
+/* 标题样式 */
+h1 {
+  text-align: center;
+  font-weight: bold;
+}
+
+h2 {
+  font-weight: bold;
+  position: relative;
+  margin-bottom: 30px;
+  color: white;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 3px;
+  background-color: #0018FF;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+h3 {
+  font-weight: bold;
+}
+
