@@ -4,6 +4,12 @@ body {
   animation: fadeInUp 3s ease-out; /* 应用移动动画 */
 }
 
+.bottom-text {
+            text-align: center;
+            width: 100%;
+        }
+
+
 /* 渐显向上移动动画 */
 @keyframes fadeInUp {
   from {
