@@ -1,1 +1,55 @@
 /* 你咋不听话捏？ */
+/* tm打开干啥？？ */
+
+/* 这个文档只放div */
+div
+{
+	width:900px;
+	background-color:#001EFF;
+	padding: 10px;
+	border:1px solid black;
+}
+div#div2
+{
+	transform:rotate(30deg);
+	-ms-transform:rotate(30deg); /* IE 9 */
+	-webkit-transform:rotate(30deg); /* Safari and Chrome */
+}
+div#div3
+{
+	width:900px;
+	background-color:#001EFF;
+	box-shadow: 10px 10px 5px #888888;
+	padding: 10px;
+}
+
+.bottom-text {
+            text-align: center;
+            width: 100%;
+        }
+
+#rcorners1 {
+    border-radius: 25px;
+    background: #001EFF;
+    padding: 10px; 
+    width: 900px;
+}
+#rcorners2 {
+    border-radius: 15px 50px;
+    background: #001EFF;
+    padding: 10px;
+    width: 900px;
+}
+#rcorners3 {
+    background-image: url(icon.png);
+    background-position: right bottom, left top;
+    background-repeat: no-repeat, repeat;
+    padding: 10px;
+}
+
+#grad1 {
+    background-color: #001EFF; /* 不支持线性的时候显示 */
+    background-image: linear-gradient(to right, #001EFF , #000222);
+	padding: 10px;
+	width: 900px
+}
