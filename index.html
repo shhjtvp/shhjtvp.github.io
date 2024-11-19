@@ -10,16 +10,25 @@
 </head>
 <body>
     <style>
+    @keyframes rotateFade {
+        0% {
+            transform: rotate(30deg); opacity: 0; 
+        }
+        50% {
+            transform: rotate(0deg); opacity: 0.5; 
+        }
+    }
     .pos_left
     {
 	    position:relative;
-	    left:-200px;
-        top:-70px;
+	    left:-300px;
+        top:-100px;
         position: absolute;
-        width: 70%;
+        width: 80%;
         height: auto;
         opacity: 0.5;
         filter: blur(3px);
+        animation: rotateFade 2s linear forwards;
     }
     </style>
     <img class="pos_left" src="SB_hj.png">
