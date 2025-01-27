@@ -1,36 +1,46 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <lang="zh-CN"></lang>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <html lang="zh-CN">
     <meta charset="UTF-8">
-	<title>hjtv的网站 | 首页 - shhjtvp.github.io</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
+	<title>HJ Post station</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords"
+        content="HJ Post station, HJ驿站, 资源, HJ站导航, 导航站, HJ导航站">
+        <meta name="description" content="HJ Post station，这是一个导航站点，还分享一些资源，绝对无套路(づ′▽`)づ。目前还在建设中...">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/script.js"></script>
+    <link rel="icon" href="icon.png" type="image/png">
 </head>
 <body>
-    <style>
-    @keyframes rotateFade {
-        0% {
-            transform: rotate(30deg); opacity: 0; 
-        }
-        50% {
-            transform: rotate(0deg); opacity: 0.5; 
-        }
-    }
-    .pos_left
-    {
-	    position:relative;
-	    left:-300px;
-        top:-100px;
-        position: absolute;
-        width: 80%;
-        height: auto;
-        opacity: 0.5;
-        filter: blur(3px);
-        animation: rotateFade 2s linear forwards;
-    }
-    </style>
-    <img class="pos_left" src="SB_hj.png">
+    <!-- 导航栏 -->
+    <ul class="navbar">
+        <li class="navbar"><a href="index.html">主页</a></li>
+        <li class="navbar"><a href="site.html">站点</a></li>
+        <li class="navbar"><a href="resource.html">资源</a></li>
+        <li class="navbar"><a href="about.html">关于</a></li>  
+    </ul>
+    <h1>Home</h1>
+
+    <!-- 主体 -->
+    <div class="main">
+        <h2>这是啥？</h2>
+        <p>这是一个导航站点，还分享一些资源，绝对全部免费(づ′▽`)づ</p>
+        <p>祝你开心(´▽`ʃ♡ƪ)"</p>
+        <hr />
+        <h2>相关链接</h2>
+        <p>
+            <button class="main" onclick="window.location.href='https://shhjtvp.github.io'">主页</button>
+            <button class="main" onclick="window.location.href='https://space.bilibili.com/2065357555?spm_id_from=333.337.0.0'">Bilibili账号</button>
+            <button class="main">邮箱：hjtv159@outlook.com</button>
+        </p>
+    </div>
+
+    <!-- 底栏 -->
+    <div class="footer">
+        <p>Copyright © 2024 HJ Post station</p>
+        <p>没有备案，因为懒，但不等于有风险。</p>
+    </div>
 </body>
 </html>
