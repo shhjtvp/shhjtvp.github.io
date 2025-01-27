@@ -39,13 +39,13 @@ li.navbar a:hover {
 
 /* 标题 */
 h1 {
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0);
     font-size: 50px;
     margin: 30px 60px 10px;
 }
 
 h2,h3, h4, h5, h6 {
-    background-color: #272727;
+    background-color: #27272700;
 }
 
 /* 主体 */
