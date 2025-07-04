@@ -22,6 +22,7 @@ body {
     width: 100%;
     margin-bottom: 80px;
     text-align: center;
+    animation: fadeInUp 0.8s ease-in-out;
 }
 .content-section h1 {
     font-size: 36px;
@@ -40,15 +41,35 @@ body {
     justify-content: center;
     height: 200px;
     width: 100%;
-    margin-bottom: 80px;
+    margin-bottom: 20px;
+    animation: fadeInUp 1s ease-in-out;
 }
 .content-section-01 h2 {
     font-size: 28px;
     color: #3a6ea5;
+    animation: fadeInUp 2s ease-in-out;
 }
 .features-01 {
     background-color: #fff;
     padding: 40px;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 2.5s ease-in-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0; /* 完全透明 */
+        transform: translateY(50px); /* 向下移动50px */
+    }
+    to {
+        opacity: 1; /* 结束状态：完全不透明 */
+        transform: translateY(0); /* 结束状态：回到原始位置 */
+    }
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: #ccc;
 }
