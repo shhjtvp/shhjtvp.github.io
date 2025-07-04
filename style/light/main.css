@@ -11,3 +11,44 @@ body {
     line-height: 1.6;
     padding-top: 70px; /* 给页面主体留出空间 */
 }
+
+
+/* 主页内容 */
+.content-section{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    width: 100%;
+    margin-bottom: 80px;
+    text-align: center;
+}
+.content-section h1 {
+    font-size: 36px;
+    color: #495057;
+}
+.features {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.content-section-01{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    width: 100%;
+    margin-bottom: 80px;
+}
+.content-section-01 h2 {
+    font-size: 28px;
+    color: #3a6ea5;
+}
+.features-01 {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
