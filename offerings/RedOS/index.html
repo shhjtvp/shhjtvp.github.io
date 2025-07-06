@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedOS启动...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #0a192f; 
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .redos-container {
+            width: 400px;
+            height: auto;
+            position: relative;
+            animation: fadeIn 2s ease-in-out forwards;
+            text-align: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .loading-spinner {
+            margin: 0 auto;
+            width: 80px;
+            height: 80px;
+            position: relative;
+            animation: spinLoading 3s linear infinite;
+        }
+        
+        @keyframes spinLoading {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .spinner-circle-1 {
+            background-color: rgba(234, 67, 53, 0.8);
+            border-radius: 5px;
+            animation: pulseBorder 3s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate both;
+        }
+        
+        .spinner-circle-2 {
+            background-color: rgba(234, 67, 53, 0.9);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin: auto;
+            animation: pulseBorder 3s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate both reverse;
+        }
+        
+        .spinner-circle-3 {
+            background-color: rgba(234, 67, 53, 1);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: auto;
+            animation: pulseBorder 3s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate both reverse-reverse;
+        }
+        
+        @keyframes pulseBorder {
+            from { box-shadow: 0 0 0 5px #f72585; } 
+            to { box-shadow: 0 0 0 15px #6c5ce7, 0 0 0 25px #00b4d8; } 
+        }
+        
+        .loading-text {
+            font-size: 36px;
+            margin-top: -60px;
+            letter-spacing: 4px;
+            position: relative;
+            animation: textPulse 2s cubic-bezier(0.4, 0, 0.21, 0.99) infinite alternate both;
+        }
+        
+        .loading-text::before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 36px;
+            background-color: #f72585;
+            margin-right: 4px;
+            animation: pulseText 1.5s cubic-bezier(0.4, 0, 0.21, 0.99) infinite alternate both;
+        }
+        
+        @keyframes textPulse {
+            from { transform: scale(0.8); opacity: 0.7; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .version-info {
+            font-size: 24px;
+            margin-top: -35px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 进度条效果 */
+        .progress-container {
+            width: 80%;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            position: absolute;
+            bottom: -30px;
+            left: auto;
+            right: auto;
+            margin-left: width/2 - (progressWidth)/2; /* 简化版 */
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #f72585;
+            transition: width 3s linear infinite, opacity 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="redos-container">
+
+        <img src="RedOS\icon\RedOS.svg" class="loading-spinner" alt="RedOS Logo">
+        
+        <div class="flex-method" style="width: 200px; height: auto;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="auto">
+                <path fill="#f72585" d="M 50,35 L 65,49.5 M 65,49.5 L 80,53 M 80,53 L 70,61 M 70,61 L 50,52 M 50,52 L 30,61" stroke-width="2"/>
+                <circle cx="50" cy="49.5" r="4" fill="#fff" />
+            </svg>
+        </div>
+        
+        <h1 class="loading-text">REDOS</h1>
+        <p class="version-info">Beta v1.0.0</p>
+        
+        <div id="progressContainer" style="display: none;">
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {// 页面加载完成后开始倒计时
+            const loadingText = document.querySelector('.loading-text');
+            const versionInfo = document.querySelector('.version-info');
+            
+            let timeLeft = 8; 
+            
+            // 开始显示进度条并更新文本
+            updateProgress();
+            
+            function updateProgress() {
+                if (timeLeft === 0) {
+                    clearInterval(countdown);
+                    
+                    // 跳转到
+                    window.location.href = "RedOS\\system\\index.html";
+                    return;
+                }
+                
+                timeLeft--;
+                
+                loadingText.textContent = `准备启动...${9 - timeLeft}`;
+
+                const progressBar = document.querySelector('.progress-bar');
+                if (timeLeft === 7) {
+                    progressBar.style.width = '0%';
+                    setTimeout(() => { updateProgress(); }, 50);
+                    return;
+                }
+
+                let progressWidth = timeLeft * 13; 
+                if (progressWidth > 100) {
+                    progressBar.style.width = '100%';
+                    setTimeout(() => { updateProgress(); }, 50);
+                    return;
+                }
+                
+                progressBar.style.opacity = timeLeft / 9; // 渐隐效果
+            }
+            
+            const countdown = setInterval(updateProgress, 100); 
+        });
+    </script>
+</body>
+</html>

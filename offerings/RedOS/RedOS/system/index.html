@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedOS Beta v0.0.3 | by Red hj</title>
+    <link rel="shortcut icon" href="../icon/RedOS.svg">
+    <style>
+        @keyframes body1 {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .body {
+            background-image: url(../icon/【哲风壁纸】二次元-动漫女孩.png);
+            background-color: rgb(149, 149, 206);
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            animation: body1 2s;
+        }
+
+        .taskbar {
+            position: fixed; 
+            bottom: 0;       
+            left: 0;         
+            right: 0;        
+            margin: 0 auto;  
+            width: 95%;    
+            height: 50px;    
+            background-color: #ff000060;
+            color: white;    
+            text-align: center;
+            line-height: 50px; 
+            z-index: 1000;
+            border-radius: 15px;
+            color: black;
+        }
+
+        .start {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background-image: url(../icon/RedOS.svg);
+            text-align: center;
+            border: none;
+            transition-duration: 0.4s;
+            color: aliceblue;
+            margin-left:10px;
+        }
+        .start:hover {
+            width: 45px;
+            height: 45px;
+            background-color: #76767693;
+        }
+
+        .taskbar-button {
+            width: 40px;
+            height: 40px;
+            margin-left:10px;
+            border-radius: 10px;
+            text-align: center;
+            border: none;
+            transition-duration: 0.4s;
+            color: rgb(255, 0, 0);
+            margin-left:10px;
+        }
+        .taskbar-button:hover {
+            width: 45px;
+            height: 45px;
+            background-color: #76767693;
+        }
+
+        .taskbar-button.browser {
+            background-image: url('../../Program Files/HJ Browser/browser-icon.svg'); /* 浏览器图标 */
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            border: none;
+            margin-left:10px;
+            color: #000;
+        }
+
+        .draggable-window {
+            position: absolute;
+            width: 1024px;
+            height: 576px;
+            background-color: rgba(0, 0, 0, 0.300);
+            border: 1px solid #01010100;
+            border-radius: 10px;
+            display: none;
+            z-index: 1001;
+            box-shadow: 5px 5px 3px #000000;
+            overflow: hidden;
+        }
+
+        .window-header {
+            background-color: #ff000060;
+            padding: 5px;
+            cursor: move;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .window-title {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .window-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+        }
+
+        .close-button {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .resize-handle {/* 窗口拖动 */
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background-color: #7cdcff;
+            cursor: se-resize;
+        }
+    </style>
+</head>
+<body class="body">
+
+    <div class="taskbar">
+        <button class="start" title="开始">start</button>
+        <button id="openButton1" data-src="https://example.com" class="taskbar-button" title="桌面/任务">dt</button>
+        <button id="openButton2" data-src="settings/index.html" class="taskbar-button" title="设置">st</button>
+        <button data-src="../../Program Files/HJ Browser/index.html" class="taskbar-button browser" title="HJ浏览器">HJ B</button>
+    </div>
+
+    <script>
+        // 动态创建窗口
+        function createWindow(src) {
+            // 检查是否已经存在窗口
+            let draggableWindow = document.getElementById('draggableWindow');
+            if (!draggableWindow) {
+                // 创建窗口
+                draggableWindow = document.createElement('div');
+                draggableWindow.id = 'draggableWindow';
+                draggableWindow.className = 'draggable-window';
+
+                const windowHeader = document.createElement('div');
+                windowHeader.className = 'window-header';
+
+                const windowIcon = document.createElement('img');
+                windowIcon.className = 'window-icon';
+                windowIcon.src = '../icon/default-icon.png'; // 默认图标
+
+                const windowTitle = document.createElement('span');
+                windowTitle.className = 'window-title';
+                windowTitle.textContent = '标题加载...';
+                windowHeader.appendChild(windowIcon);
+                windowHeader.appendChild(windowTitle);
+
+                const closeButton = document.createElement('button');
+                closeButton.className = 'close-button';
+                closeButton.textContent = 'X';
+                closeButton.onclick = () => draggableWindow.remove();
+                windowHeader.appendChild(closeButton);
+
+                const iframe = document.createElement('iframe');
+                iframe.id = 'iframeContent';
+                iframe.src = src;
+                iframe.onload = () => {
+                    // 动态获取页面标题
+                    try {
+                        const title = iframe.contentDocument.title || '这个页面没标题哦';
+                        windowTitle.textContent = title;
+
+                        // 动态获取页面图标
+                        const link = iframe.contentDocument.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+                        if (link && link.href) {
+                            windowIcon.src = link.href;
+                        }
+                    } catch (e) {
+                        console.error("无法加载标题或图标：", e);
+                        windowTitle.textContent = "找不到标题诶...";
+                        windowIcon.src = '../icon/error-icon.png'; // 错误图标
+                    }
+                };
+
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+
+                draggableWindow.appendChild(windowHeader);
+                draggableWindow.appendChild(iframe);
+                draggableWindow.appendChild(resizeHandle);
+                document.body.appendChild(draggableWindow);
+
+                // 窗口可拖动功能
+                let isDragging = false;
+                let offsetX, offsetY;
+
+                windowHeader.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    offsetX = e.clientX - draggableWindow.getBoundingClientRect().left;
+                    offsetY = e.clientY - draggableWindow.getBoundingClientRect().top;
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                });
+
+                function mouseMoveHandler(e) {
+                    if (isDragging) {
+                        draggableWindow.style.left = `${e.clientX - offsetX}px`;
+                        draggableWindow.style.top = `${e.clientY - offsetY}px`;
+                    }
+                }
+
+                function mouseUpHandler() {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', mouseMoveHandler);
+                    document.removeEventListener('mouseup', mouseUpHandler);
+                }
+
+                // 窗口可调整大小功能
+                let isResizing = false;
+                let startX, startY, startWidth, startHeight;
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = draggableWindow.offsetWidth;
+                    startHeight = draggableWindow.offsetHeight;
+                    document.addEventListener('mousemove', resizeMoveHandler);
+                    document.addEventListener('mouseup', resizeUpHandler);
+                });
+
+                function resizeMoveHandler(e) {
+                    if (isResizing) {
+                        const newWidth = Math.max(300, startWidth + (e.clientX - startX)); // 最小宽度300px
+                        const newHeight = Math.max(200, startHeight + (e.clientY - startY)); // 最小高度200px
+                        draggableWindow.style.width = `${newWidth}px`;
+                        draggableWindow.style.height = `${newHeight}px`;
+                    }
+                }
+
+                function resizeUpHandler() {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', resizeMoveHandler);
+                    document.removeEventListener('mouseup', resizeUpHandler);
+                }
+            } else {
+                // 如果窗口已存在，直接显示
+                draggableWindow.style.display = 'block';
+                draggableWindow.querySelector('iframe').src = src;
+            }
+        }
+
+        // 绑定所有按钮的点击事件
+        document.querySelectorAll('.taskbar-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const src = button.getAttribute('data-src');
+                createWindow(src);
+            });
+        });
+    </script>
+
+</body>
+</html>

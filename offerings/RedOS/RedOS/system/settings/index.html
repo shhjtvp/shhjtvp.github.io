@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedOS Beta v0.0.3 | 设置 | by Red hj</title>
+    <link rel="shortcut icon" href="setting-icon.svg">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff60;
+        }
+
+        .head-01 {
+            height: 100px;
+            width: 100%;
+            color: #000000;
+            background-color: #ffffff;
+            border: 1px solid #ffffff;
+            border-radius: 5px;
+        }
+
+        .settings-container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+        }
+
+        .settings-section h2 {
+            margin: 0 0 10px;
+        }
+
+        .settings-section label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .settings-section input[type="text"],
+        .settings-section input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .settings-section button {
+            padding: 10px 15px;
+            background-color: #ff000060;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .settings-section button:hover {
+            background-color: #ff000080;
+        }
+
+        p {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="head-01"><h1>设置 v0.0.1 for RedOS Beta v0.0.3</h1></div>
+    <div class="settings-container">
+        <div class="settings-section">
+            <h2>壁纸设置</h2>
+            <label for="background-url">壁纸图片URL：</label>
+            <input type="text" id="background-url" placeholder="请输入图片的URL地址">
+            <label for="background-file">或选择本地图片：</label>
+            <input type="file" id="background-file" accept="image/*">
+            <button onclick="changeBackground()">更改后请刷新页面</button>
+        </div>
+    </div>
+    <div class="settings-container">
+        <div class="settings-section">
+            <h2>关于</h2>
+            <p><b>作者：</b>红蘑菇hj@bilibili.com</p><br>
+            <p><b>开源信息：</b><a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></p><br>
+            <p><b>版本：</b>RedOS Beta v0.0.3</p>
+        </div>
+    </div>
+
+
+
+    <script>
+        function changeBackground() {
+            const backgroundUrlInput = document.getElementById('background-url');
+            const backgroundFileInput = document.getElementById('background-file');
+            let backgroundUrl = backgroundUrlInput.value;
+
+            if (backgroundFileInput.files.length > 0) {
+                const file = backgroundFileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    backgroundUrl = e.target.result;
+                    saveBackgroundSetting(backgroundUrl);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveBackgroundSetting(backgroundUrl);
+            }
+        }
+
+        function saveBackgroundSetting(backgroundUrl) {
+            if (backgroundUrl) {
+                localStorage.setItem('backgroundUrl', backgroundUrl);
+                alert('背景更新啦！');
+            } else {
+                alert('需要输入有效的图片地址哦！');
+            }
+        }
+
+        // 加载本地存储的背景设置
+        window.onload = function() {
+            const backgroundUrl = localStorage.getItem('backgroundUrl');
+            if (backgroundUrl) {
+                document.getElementById('background-url').value = backgroundUrl;
+            }
+        };
+    </script>
+</body>
+</html>
