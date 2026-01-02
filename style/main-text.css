@@ -1,0 +1,112 @@
+/* 改善段落和列表样式 */
+.main-content {
+    margin-top:100px;
+	margin-bottom:100px;
+	margin-right:50px;
+	margin-left:50px;
+}
+
+.main-content p {
+    text-align: justify;
+    text-justify: inter-word;
+    margin-bottom: 1.5em;
+}
+
+.main-content ul, 
+.main-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1.5em;
+    color: #e0e0e0;
+}
+
+.main-content li {
+    margin-bottom: 0.5em;
+}
+
+/* 链接样式 */
+.main-content a {
+    color: #4dabf7;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+.main-content a:hover {
+    color: #74c0fc;
+    border-bottom: 1px solid #74c0fc;
+}
+.main-content a:visited {color:#4d81a8;}
+.main-content a:active {color: blue;}
+
+
+/* 代码块样式 */
+.main-content code {
+    background-color: #2d2f31;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    color: #e9ecef;
+}
+
+/* 引用样式 */
+.main-content blockquote {
+    border-left: 10px solid rgb(0, 100, 255);
+    margin: 1.5em 0;
+    padding: 0.5em 1em;
+    background-color: #2a2d2f;
+    color: #adb5bd;
+}
+
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+    /* 移动设备上不需要太大内边距 */
+    ul.leftbar.active ~ .main-content {
+        padding-left: 220px;
+        padding-right: 20px;
+    }
+    
+    .main-content {
+        font-size: 15px;
+    }
+}
+
+/* @media (max-width: 576px) {
+    ul.leftbar.active ~ .main-content {
+        opacity: 0.3;
+        pointer-events: none; 
+    }
+} */
+/* 移动设备适配 */
+@media (max-width: 768px) {
+    ul.leftbar.active ~ .main-content {/* 移动设备上，侧栏展开时正文的左边距可以小一些 */
+        padding-left: 220px;
+        padding-right: 20px;
+    }
+    /* 确保在小屏幕上正文仍然可读 */
+    .main-content {
+        padding-left: 20px;
+        padding-right: 20px;
+        font-size: 15px;
+    }
+}
+@media (max-width: 576px) {
+    ul.leftbar.active ~ .main-content {/* 在非常小的屏幕上调整边距 */
+        padding-left: 180px; /* 减少边距适应小屏幕 */
+        padding-right: 15px;
+    }
+    .main-content {/* 确保正文完全可见并可交互 */
+        padding-left: 15px;
+        padding-right: 15px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+
+
+
+/* 图片 */
+img {
+    float: none;
+    width: 200px;
+}

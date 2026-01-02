@@ -1,0 +1,157 @@
+body {
+    margin: 0;
+    color: white;
+    background-color: #17181a;
+    font-family: Arial, sans-serif;
+}
+
+/* 侧栏 - 默认隐藏 */
+ul.leftbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: #333;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+    overflow-y: auto;
+    border-right: 10px solid rgb(0, 100, 255);
+    left: -200px; /* 默认隐藏在屏幕左侧外 */
+    top: 0;
+    transition: left 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* 弹性过渡效果 */
+    z-index: 999;
+    box-shadow: 3px 0 20px rgba(0, 100, 255, 0.3);
+}
+/* 展开时的侧栏样式 */
+ul.leftbar.active {
+    left: 0;
+    box-shadow: 5px 0 25px rgba(0, 100, 255, 0.5);
+}
+
+/* 圆形展开按钮 */
+.toggle-sidebar {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, rgb(0, 100, 255), rgb(0, 150, 255));
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: none;
+    outline: none;
+    box-shadow: 0 4px 15px rgba(0, 100, 255, 0.4);
+}
+/* 按钮悬停动画 */
+.toggle-sidebar:hover {
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(0, 100, 255, 0.6);
+    background: linear-gradient(135deg, rgb(0, 120, 255), rgb(0, 180, 255));
+}
+/* 按钮点击动画 */
+.toggle-sidebar:active {
+    transform: scale(0.80) rotate(45deg);
+    transition: all 0.1s ease;
+    box-shadow: 0 2px 10px rgba(0, 100, 255, 0.3);
+}
+/* 按钮内的三条线（汉堡菜单图标） */
+.toggle-sidebar .hamburger {
+    position: relative;
+    width: 24px;
+    height: 18px;
+    transition: all 0.3s ease;
+}
+
+.toggle-sidebar .hamburger span {
+    display: block;
+    position: absolute;
+    height: 2px;
+    width: 100%;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.toggle-sidebar .hamburger span:nth-child(1) {top: 0;}
+.toggle-sidebar .hamburger span:nth-child(2) {top: 8px;}
+.toggle-sidebar .hamburger span:nth-child(3) {top: 16px;}
+
+/* 侧栏展开时的汉堡菜单动画 */
+ul.leftbar.active ~ .toggle-sidebar .hamburger span:nth-child(1) {
+    transform: rotate(45deg);
+    top: 8px;
+}
+
+ul.leftbar.active ~ .toggle-sidebar .hamburger span:nth-child(2) {
+    opacity: 0;
+}
+
+ul.leftbar.active ~ .toggle-sidebar .hamburger span:nth-child(3) {
+    transform: rotate(-45deg);
+    top: 8px;
+}
+
+/* 侧栏展开时的按钮位置和样式动画 */
+ul.leftbar.active + .toggle-sidebar,
+ul.leftbar.active ~ .toggle-sidebar {
+    left: 220px; /* 200px侧栏宽度 + 20px间距 */
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgb(0, 150, 255), rgb(0, 100, 255));
+}
+
+li.leftbar a {
+    display: block;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    transform: translateX(-10px);
+    opacity: 0;
+}
+
+/* 侧栏展开时的菜单项动画 */
+ul.leftbar.active li.leftbar a {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* 为每个菜单项添加延迟动画 */
+ul.leftbar.active li.leftbar:nth-child(1) a {transition-delay: 0.1s;}
+ul.leftbar.active li.leftbar:nth-child(2) a {transition-delay: 0.25s;}
+ul.leftbar.active li.leftbar:nth-child(3) a {transition-delay: 0.4s;}
+ul.leftbar.active li.leftbar:nth-child(4) a {transition-delay: 0.55s;}
+ul.leftbar.active li.leftbar:nth-child(5) a {transition-delay: 0.7s;}
+ul.leftbar.active li.leftbar:nth-child(6) a {transition-delay: 1.85s;}
+
+/* 其余样式保持不变 */
+li.leftbar a.active {
+    background-color: rgb(0, 100, 255);
+    color: white;
+}
+
+li.leftbar a:hover:not(.active) {
+    background-color: #17181a;
+    color: white;
+    padding-left: 50px;
+    transform: scale(1.05);
+}
+
+/* 正文内容区域 - 始终保留左侧边距 */
+.main-content {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 20px;
+    transition: padding-left 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+/* 当侧栏展开时，增加左边距以避免遮挡 */
+ul.leftbar.active ~ .main-content {
+    padding-left: 240px;
+}
