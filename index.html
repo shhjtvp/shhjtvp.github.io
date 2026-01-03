@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-hans-cn">
     <head>
         <meta charset="utf-8">
@@ -11,9 +10,10 @@
         <meta name="author" content="红蘑菇hj">
         <style>
             body{
-	            background-image:url('img\index_backgraund.png');
-	            background-repeat:no-repeat;
+                background-image:url('img\index_backgraund.png');
+                background-repeat:no-repeat;
                 background-position:right top;
+                background-attachment: fixed;
             }
         </style>
     </head>
@@ -33,41 +33,97 @@
 
         <!-- 正文 -->
         <div class="main-content">
-            <img src="img/icon.png" style="-webkit-filter: brightness(250%);filter: brightness(250%);">
+            <!-- 顶部品牌区域 -->
+            <div class="brand-header" style="display: flex; align-items: center; gap: 20px; margin-bottom: 40px;">
+                <img src="img/icon.png" style="filter: brightness(100%); width: 80px; height: 80px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 100, 255, 0.5);">
+                <div>
+                    <h1 style="margin: 0; font-size: 2.8em; background: linear-gradient(90deg, #4dabf7, #74c0fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">HJ</h1>
+                    <p style="margin: 5px 0 0 0; color: #adb5bd; font-size: 1.1em;">好想成为人类啊！</p>
+                </div>
+            </div>
 
-            <br>
-            <h1>好想成为人类啊！</h1><br>
-            <p style="font-weight: bold;">专注于制作全网最差的软件</p><img src="img/fuck_code.png" style="float: right;" title="fuck_code.png">
-            <p>HJ 产品的代码是最抽象的、效率最低的、可读性最差的。看得懂的只有昨天的作者和上帝。因为我们坚持使用长难句和病句向 AI 提问、改 Bug 、生成代码，并随意使用非人类思维来修改变量名和注释，而且绝不轻易重构、优化逻辑。这是一些文本。这是一些文本。</p>
-            <br><br><br>
-            <p style="font-weight: bold; text-align: right;">力争气笑，保证没用</p>
-            <p style="text-align: right;">HJ 通过<a href="https://tieba.baidu.com/f?kw=%E5%BC%B1%E6%99%BA">弱智吧</a>权威专家理论的深度分析制作最没用的软件，使您浪费时间、搞砸项目、遇见劳大。</p>
+            <!-- 主标语 -->
+            <div style="text-align: center; margin: 50px 0 70px 0;">
+                <h2 style="font-size: 1.8em; margin-bottom: 15px; color: #e9ecef;">专注于制作全网最抽象的软件</h2>
+                <p style="max-width: 800px; margin: 0 auto; color: #adb5bd; font-size: 1.1em; line-height: 1.6; text-align: center;">
+                    我们致力于创造效率最低、可读性最差、最没用的软件，以及糟糕的使用体验
+                </p>
+            </div>
 
-            <hr>
-            <p style="font-size: 10px; text-align: center;">shhjtvp.github.io</p>
+            <button class="main" title="小馋猫~" style="margin-left: 70%;;">了解详情</button> <br><br><br>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; margin-bottom: 60px;">
+                <!-- 特性卡片 1 -->
+                <div style="flex: 1; min-width: 300px; max-width: 400px; background: rgba(42, 45, 47, 0.7); border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(77, 171, 247, 0.2);">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                        <img src="img/fuck_code.png" style="width: 50px; height: 50px;" title="fuck_code.png">
+                        <h3 style="margin: 0; color: #e9ecef; font-size: 1.4em;">糟糕的代码</h3>
+                    </div>
+                    <p style="color: #adb5bd; line-height: 1.7; margin-bottom: 20px;">
+                        我们使用长难句、病句向AI提问，并以非人类思维随意重命名变量，绝不重构优化。看得懂的只有昨天的作者和上帝。
+                    </p>
+                    <div style="color: #74c0fc; font-size: 0.9em; font-style: italic;">
+                        "我们低熵体有能力造出混乱之物。"
+                    </div>
+                </div>
+                <!-- 特性卡片 2 -->
+                <div style="flex: 1; min-width: 300px; max-width: 400px; background: rgba(42, 45, 47, 0.7); border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(77, 171, 247, 0.2);">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; justify-content: flex-end;">
+                        <h3 style="margin: 0; color: #e9ecef; font-size: 1.4em; text-align: right;">力争气笑，保证没用</h3>
+                        <img src="https://tiebapic.baidu.com/forum/w%3D120%3Bh%3D120/sign=1b7de30b764e251fe2f7e0fa97bda12a/8ad4b31c8701a18bdd9f537ed82f07082838fe8f.jpg?tbpicau=2026-01-14-05_efead5fde3e77891439400cbfcddcb0c" style="width: 50px; height: 50px; border-radius: 8px;" title="fuck_brain.png">
+                    </div>
+                    <p style="color: #adb5bd; line-height: 1.7; margin-bottom: 20px; text-align: right;">
+                        通过<a href="https://tieba.baidu.com/f?kw=%E5%BC%B1%E6%99%BA" style="color: #4dabf7; text-decoration: none; border-bottom: 1px solid transparent; transition: all 0.2s ease;" onmouseover="this.style.borderBottom='1px solid #74c0fc'" onmouseout="this.style.borderBottom='1px solid transparent'">弱智吧</a>权威专家理论的深度分析，我们制作最没用的软件，保证浪费时间、搞砸项目、遇见劳大。
+                    </p>
+                    <div style="color: #74c0fc; font-size: 0.9em; font-style: italic; text-align: right;">
+                        "人类的所有科技成果都是有用的，需要我们来填补这一空缺。"
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分隔装饰线 -->
+            <div style="text-align: center; margin: 60px 0; position: relative;">
+                <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(77, 171, 247, 0.5), transparent);"></div>
+                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #17181a; padding: 0 20px;">
+                    <span style="color: #4dabf7; font-size: 1.2em;">✦</span>
+                </div>
+            </div>
+
+            <!-- 底部标语 -->
+            <div style="padding: 40px; background: rgba(0, 100, 255, 0.05); border-radius: 16px; margin-bottom: 40px;">
+                <h2 style="color: #e9ecef; font-size: 1.5em; margin-bottom: 15px; text-align: center; ">为什么选择HJ？</h2><br><br>
+                <h3 style="text-align: center;">众多神人的选择</h3>
+                <p style="color: #adb5bd; max-width: 700px; margin: 0 auto; line-height: 1.7;">全球有83亿人口，即使神人只占万分之一，那也意味着有上万人需要有专门的产品来使用。这也是我们的目的。</p><br>
+                <h3 style="text-align: center;">合作伙伴</h3>
+
+            </div>
+
+            <!-- 页脚 -->
+            <div style="text-align: center; padding: 30px 0; color: #6c757d; font-size: 0.9em; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <p style="margin: 0; letter-spacing: 2px; font-size: 1.1em;">shhjtvp.github.io</p>
+                <p style="margin: 10px 0 0 0; color: #495057;">© 2026 红蘑菇HJ - 神金工作室</p>
+            </div>
         </div>
 
+        <!-- js -->
+        <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.leftbar');
+            sidebar.classList.toggle('active');
+        }
 
-
-<!-- js -->
-<script>
-function toggleSidebar() {
-    const sidebar = document.querySelector('.leftbar');
-    sidebar.classList.toggle('active');
-}
-
-// 点击侧栏外部关闭侧栏
-document.addEventListener('click', function(event) {
-    const sidebar = document.querySelector('.leftbar');
-    const toggleBtn = document.querySelector('.toggle-sidebar');
-    
-    if (sidebar.classList.contains('active') && 
-        !sidebar.contains(event.target) && 
-        !toggleBtn.contains(event.target)) {
-        sidebar.classList.remove('active');
-    }
-});
-</script>
+        // 点击侧栏外部关闭侧栏
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.leftbar');
+            const toggleBtn = document.querySelector('.toggle-sidebar');
+            
+            if (sidebar.classList.contains('active') && 
+                !sidebar.contains(event.target) && 
+                !toggleBtn.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+        </script>
 
     </body>
 </html>
