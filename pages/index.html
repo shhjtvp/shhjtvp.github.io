@@ -10,10 +10,42 @@
         <meta name="author" content="红蘑菇hj">
         <style>
             body{
-                background-image:url('..\img\index_backgraund.png');
+                background-image:url('img\index_backgraund.png');
                 background-repeat:no-repeat;
                 background-position:right top;
                 background-attachment: fixed;
+            }
+
+            .clearfix:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+            div.img {border: 1px solid #ccc;}
+            div.img:hover {border: 1px solid #777;}
+            div.img img {width: 100%;height: auto;}
+            div.desc {padding: 15px;text-align: center;}
+            * {box-sizing: border-box;}
+            .responsive {
+                padding: 0 6px;
+                float: left;
+                width: 10%;
+            }
+            @media only screen and (max-width: 700px){
+                .responsive {
+                    width: 49.99999%;
+                    margin: 6px 0;
+                }
+            }
+            @media only screen and (max-width: 500px){
+                .responsive {
+                width: 100%;
+                }
+            }
+            .clearfix:after {
+                content: "";
+                display: table;
+                clear: both;
             }
         </style>
     </head>
@@ -27,7 +59,7 @@
             <li class="leftbar"><a class="active" href="https://shhjtvp.github.io">主页</a></li>
             <li class="leftbar"><a href="products/">产品</a></li>
             <li class="leftbar"><a href="article/">文章</a></li>
-            <li class="leftbar"><a href="pages/">页面</a></li>
+            <li class="leftbar"><a href="pages/">整活页面</a></li>
             <li class="leftbar"><a href="about/">关于</a></li>
         </ul>
 
@@ -44,23 +76,54 @@
 
             <!-- 主标语 -->
             <div style="text-align: center; margin: 50px 0 70px 0;">
-                <h2 style="font-size: 1.8em; margin-bottom: 15px; color: #e9ecef;">产品列表</h2>
+                <h2 style="font-size: 1.8em; margin-bottom: 15px; color: #e9ecef;">页面列表</h2>
                 <p style="max-width: 800px; margin: 0 auto; color: #adb5bd; font-size: 1.1em; line-height: 1.6; text-align: center;">
-                    最抽象
+                    这个页面使用来整活 or 公开处刑的导航页。
                 </p>
             </div>
-            
 
-            <div style="margin: 20px; border-radius: 20px; background-color: #495057; padding: 30px;">
-                还没有
+            <!-- 分页内容容器 -->
+            <div class="content-container" id="contentContainer">
+                <!-- 列表内容 -->
+                超自然档案
+                 <ul>
+                    <li>hj-01 郭梓渊</li>
+                 </ul>
+                <ul id="contentList">
+                    <!-- 内容会通过JS动态添加 -->
+                </ul>
             </div>
 
-        
+            
+
+            点击左下角按钮打开导航。<br><br>
+
+            <div class="pagination-wrapper" id="paginationWrapper" style="display: none;">
+                <div class="pagination-container">
+                    <ul class="pagination" id="pagination">
+                        <!-- 分页按钮会通过JS动态生成 -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 页脚 -->
             <div style="text-align: center; padding: 30px 0; color: #6c757d; font-size: 0.9em; border-top: 1px solid rgba(255, 255, 255, 0.1);">
                 <p style="margin: 0; letter-spacing: 2px; font-size: 1.1em;">shhjtvp.github.io</p>
                 <p style="margin: 10px 0 0 0; color: #495057;">© 2026 红蘑菇HJ - 神金工作室</p>
             </div>
+        </div>
 
+        
+
+        <!-- css -->
+         <style>
+            /* 悬停效果 */
+            .partners-container > div:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 35px rgba(0, 100, 255, 0.25);
+                border-color: rgba(77, 171, 247, 0.4);
+            }
+        </style>
 
 
 

@@ -105,8 +105,35 @@
 
 
 
-/* 图片 */
+/* 图片 ------------------------*/
 img {
     float: none;
     width: 200px;
+}
+
+
+
+
+/* 确保分页样式不会影响其他列表 ---------------------------------------------------*/
+.main-content ul:not(.pagination) {
+    margin-left: 1.5em;
+    margin-bottom: 1.5em;
+    color: #e0e0e0;
+}
+
+/* 确保分页链接样式不会影响正文链接 */
+.main-content a:not(.page-link) {
+    color: #4dabf7;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+/* 分页链接特殊处理 */
+.pagination a {
+    border-bottom: none !important;
+}
+
+.pagination a:hover {
+    border-bottom: none !important;
 }
