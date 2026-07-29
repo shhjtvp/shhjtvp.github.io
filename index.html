@@ -1,216 +1,65 @@
 <!DOCTYPE html>
-<html lang="zh-hans-cn">
-    <head>
-        <meta charset="utf-8">
-        <title>HJ</title>
-        <meta name="description" content="ヾ(•ω•`)o">
-        <link rel="shortcut icon" href="img\icon.png">
-        <link rel="stylesheet" type="text/css" href="style\style.css">
-        <link rel="stylesheet" type="text/css" href="style\main-text.css">
-        <meta name="author" content="红蘑菇hj">
-        <style>
-            body{
-                background-image:url('img\index_backgraund.png');
-                background-repeat:no-repeat;
-                background-position:right top;
-                background-attachment: fixed;
-            }
-
-            .clearfix:after {
-                content: "";
-                display: table;
-                clear: both;
-            }
-            div.img {border: 1px solid #ccc;}
-            div.img:hover {border: 1px solid #777;}
-            div.img img {width: 100%;height: auto;}
-            div.desc {padding: 15px;text-align: center;}
-            * {box-sizing: border-box;}
-            .responsive {
-                padding: 0 6px;
-                float: left;
-                width: 10%;
-            }
-            @media only screen and (max-width: 700px){
-                .responsive {
-                    width: 49.99999%;
-                    margin: 6px 0;
-                }
-            }
-            @media only screen and (max-width: 500px){
-                .responsive {
-                width: 100%;
-                }
-            }
-            .clearfix:after {
-                content: "";
-                display: table;
-                clear: both;
-            }
-        </style>
-    </head>
-    <body>
-        <button class="toggle-sidebar" onclick="toggleSidebar()">
-            <div class="hamburger">
-                <span></span><span></span><span></span>
-            </div>
-        </button>
-        <ul class="leftbar">
-            <li class="leftbar"><a class="active" href="https://shhjtvp.github.io">主页</a></li>
-            <li class="leftbar"><a href="products/">产品</a></li>
-            <li class="leftbar"><a href="article/">文章</a></li>
-            <li class="leftbar"><a href="pages/">整活页面</a></li>
-            <li class="leftbar"><a href="about/">关于</a></li>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红蘑菇hj - 首页</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        
+        .item {
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== 全局导航栏 ========== -->
+    <nav class="global-nav">
+        <div class="nav-brand"><i mg src="mc_textures\26.2-Fabric 0.19.3\assets\minecraft\textures\block\red_mushroom.png" width="200%" class="pixel-art"></div>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">首页</a></li>
+            <li><a href="maps">地图展示</a></li>
+            <li><a href="mods">MOD 下载</a></li>
+            <li><a href="collections.html">文档</a></li>
         </ul>
+    </nav>
 
-        <!-- 正文 -->
-        <div class="main-content">
-            <!-- 顶部品牌区域 -->
-            <div class="brand-header" style="display: flex; align-items: center; gap: 20px; margin-bottom: 40px;">
-                <img src="img/icon.png" style="filter: brightness(100%); width: 80px; height: 80px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 100, 255, 0.5);">
-                <div>
-                    <h1 style="margin: 0; font-size: 2.8em; background: linear-gradient(90deg, #4dabf7, #74c0fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">HJ</h1>
-                    <p style="margin: 5px 0 0 0; color: #adb5bd; font-size: 1.1em;">好想成为人类啊！</p>
-                </div>
-            </div>
+    首页还未完成...
 
-            <!-- 主标语 -->
-            <div style="text-align: center; margin: 50px 0 70px 0;">
-                <h2 style="font-size: 1.8em; margin-bottom: 15px; color: #e9ecef;">专注于制作全网最抽象的软件</h2>
-                <p style="max-width: 800px; margin: 0 auto; color: #adb5bd; font-size: 1.1em; line-height: 1.6; text-align: center;">
-                    我们致力于创造效率最低、可读性最差、最没用的软件，以及糟糕的使用体验
-                </p>
-            </div>
-
-            <a href="products/"><button class="main" title="小馋猫~" style="margin-left: 70%;" >了解详情</button></a> <br><br><br>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; margin-bottom: 60px;">
-                <!-- 特性卡片 1 -->
-                <div style="flex: 1; min-width: 300px; max-width: 400px; background: rgba(42, 45, 47, 0.7); border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(77, 171, 247, 0.2);">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-                        <img src="img/fuck_code.png" style="width: 50px; height: 50px;" title="fuck_code.png">
-                        <h3 style="margin: 0; color: #e9ecef; font-size: 1.4em;">糟糕的代码</h3>
-                    </div>
-                    <p style="color: #adb5bd; line-height: 1.7; margin-bottom: 20px;">
-                        我们使用长难句、病句向AI提问，并以非人类思维随意重命名变量，绝不重构优化。看得懂的只有昨天的作者和上帝。
-                    </p>
-                    <div style="color: #74c0fc; font-size: 0.9em; font-style: italic;">
-                        "我们低熵体有能力造出混乱之物，这是人类是否能生存的关键因素。"
-                    </div>
-                </div>
-                <!-- 特性卡片 2 -->
-                <div style="flex: 1; min-width: 300px; max-width: 400px; background: rgba(42, 45, 47, 0.7); border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(77, 171, 247, 0.2);">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; justify-content: flex-end;">
-                        <h3 style="margin: 0; color: #e9ecef; font-size: 1.4em; text-align: right;">力争气笑，保证没用</h3>
-                        <img src="https://tiebapic.baidu.com/forum/w%3D120%3Bh%3D120/sign=1b7de30b764e251fe2f7e0fa97bda12a/8ad4b31c8701a18bdd9f537ed82f07082838fe8f.jpg?tbpicau=2026-01-14-05_efead5fde3e77891439400cbfcddcb0c" style="width: 50px; height: 50px; border-radius: 8px;" title="fuck_brain.png">
-                    </div>
-                    <p style="color: #adb5bd; line-height: 1.7; margin-bottom: 20px; text-align: right;">
-                        通过<a href="https://tieba.baidu.com/f?kw=%E5%BC%B1%E6%99%BA" style="color: #4dabf7; text-decoration: none; border-bottom: 1px solid transparent; transition: all 0.2s ease;" onmouseover="this.style.borderBottom='1px solid #74c0fc'" onmouseout="this.style.borderBottom='1px solid transparent'">弱智吧</a>权威专家理论的深度分析，我们制作最没用的软件，保证浪费时间、搞砸项目、遇见劳大。
-                    </p>
-                    <div style="color: #74c0fc; font-size: 0.9em; font-style: italic; text-align: right;">
-                        "人类的所有科技成果都是有用的，几乎没有无用的技术，需要有人来填补这一空缺。"
-                    </div>
-                </div>
-            </div>
-
-            <!-- 分隔装饰线 -->
-            <div style="text-align: center; margin: 60px 0; position: relative;">
-                <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(77, 171, 247, 0.5), transparent);"></div>
-                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #17181a; padding: 0 20px;">
-                    <span style="color: #4dabf7; font-size: 1.2em;">✦</span>
-                </div>
-            </div>
-
-            <!-- 底部标语 -->
-            <div style="padding: 40px; background: rgba(0, 100, 255, 0.05); border-radius: 16px; margin-bottom: 40px;">
-                <h2 style="color: #e9ecef; font-size: 1.5em; margin-bottom: 15px; text-align: center; ">为什么选择HJ？</h2><br><br>
-                <h3 style="text-align: center; font-size: 1.6em;">众多神人的选择</h3>
-
-                <p style="color: #adb5bd; max-width: 700px; margin: 0 auto; line-height: 1.7;">全球有83亿人口，即使神人只占万分之一，那也意味着有上万人需要有专门的产品来使用。为神人服务是我们的目的。<br>目前，我们的产品好评如潮，这是其他人类从来没有做到过的。</p><br>
-                <h3 style="text-align: center; color: #e9ecef; margin: 40px 0 30px 0; font-size: 1.6em;">糕质量的合作伙伴<span style="font-size: 9px;">（公开处刑 数码/科技圈 乐子）</span></h3>
-                <!-- 卡片 -->
-                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-bottom: 40px;">
-                    <!-- 合作伙伴卡片 1 -->
-                    <div style="flex: 0 1 300px; background: rgba(42, 45, 47, 0.8); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; border: 1px solid rgba(77, 171, 247, 0.2); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
-                        <a target="_blank" href="https://hwlos.mysxl.cn/" style="text-decoration: none; color: inherit; display: block;">
-                            <div style="padding: 25px 25px 15px 25px; text-align: center;">
-                                <div style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(77, 171, 247, 0.3); padding: 5px;">
-                                    <img src="https://user-assets.sxlcdn.com/images/1259944/Foa3xVbhNUEglzDzTxrNeR6u-zBQ.png?imageMogr2/strip/auto-orient/thumbnail/300x300%3E/format/png" 
-                                        alt="HardwareLab" 
-                                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                                </div>
-                                <h4 style="margin: 0 0 8px 0; color: #e9ecef; font-size: 1.2em;">HardwareLab</h4>
-                                <p style="margin: 0; color: #74c0fc; font-size: 0.95em; font-weight: bold;">字研操作系统</p>
-                            </div>
-                            <div style="padding: 15px 25px; background: rgba(0, 100, 255, 0.05); text-align: center; border-top: 1px solid rgba(77, 171, 247, 0.1);">
-                                <p style="margin: 0; color: #adb5bd; font-size: 0.9em; line-height: 1.4;">魔改 Win PE 也是自研！</p>
-                            </div>
-                        </a>
-                    </div>
-                    <!-- 合作伙伴卡片 2 -->
-                    <div style="flex: 0 1 300px; background: rgba(42, 45, 47, 0.8); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; border: 1px solid rgba(77, 171, 247, 0.2); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
-                        <a target="_blank" href="https://space.bilibili.com/3546941350742836" style="text-decoration: none; color: inherit; display: block;">
-                            <div style="padding: 25px 25px 15px 25px; text-align: center;">
-                                <div style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(77, 171, 247, 0.3); padding: 5px;">
-                                    <img src="https://i1.hdslb.com/bfs/face/bfb524f623f93cdfbc020f6302fe45d3bba7cb9c.jpg@128w_128h_1c_1s.webp" 
-                                        alt="鸡胸肉a3" 
-                                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                                </div>
-                                <h4 style="margin: 0 0 8px 0; color: #e9ecef; font-size: 1.2em;">鸡胸肉a3</h4>
-                                <p style="margin: 0; color: #74c0fc; font-size: 0.95em; font-weight: bold;">B站UP主</p>
-                            </div>
-                            <div style="padding: 15px 25px; background: rgba(0, 100, 255, 0.05); text-align: center; border-top: 1px solid rgba(77, 171, 247, 0.1);">
-                                <p style="margin: 0; color: #adb5bd; font-size: 0.9em; line-height: 1.4;">起号/骗流量的高手</p>
-                            </div>
-                        </a>
-                    </div>
-    
-                </div>
-
-            </div>
-
-            点击左下角按钮打开导航。<br><br>
-
-            <!-- 页脚 -->
-            <div style="text-align: center; padding: 30px 0; color: #6c757d; font-size: 0.9em; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <p style="margin: 0; letter-spacing: 2px; font-size: 1.1em;">shhjtvp.github.io</p>
-                <p style="margin: 10px 0 0 0; color: #495057;">© 2026 红蘑菇HJ - 神金工作室</p>
-            </div>
+        <div class="item">
+            <mc-block size="480px">grass_block</mc-block>
+            <div>草方块</div>
+        </div>
+        <div class="item">
+            <mc-block size="360px">diamond_block</mc-block>
+            <div>钻石块</div>
+        </div>
+        <div class="item">
+            <mc-block size="240px">melon</mc-block>
+            <div>西瓜</div>
+        </div>
+        <div class="item">
+            <mc-block size="120px">oak_leaves</mc-block>
+            <div>橡树叶 (带颜色图)</div>
+        </div>
+        <div class="item">
+            <mc-block size="60px">dandelion</mc-block>
+            <div>蒲公英 (cross 模型)</div>
+        </div>
+        <div class="item">
+            <mc-block size="36px">stone</mc-block>
+            <div>石头</div>
         </div>
 
-        
+    
 
-        <!-- css -->
-         <style>
-            /* 悬停效果 */
-            .partners-container > div:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 35px rgba(0, 100, 255, 0.25);
-                border-color: rgba(77, 171, 247, 0.4);
-            }
-        </style>
+    <!-- ========== 全局页脚 ========== -->
+    <footer class="global-footer">
+        <p>© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 使用 marked.js / highlight.js / Giscus</p>
+    </footer>
 
+    <script type="module" src="js/minecraft.js"></script>
 
-
-        <!-- js -->
-        <script>
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.leftbar');
-            sidebar.classList.toggle('active');
-        }
-
-        // 点击侧栏外部关闭侧栏
-        document.addEventListener('click', function(event) {
-            const sidebar = document.querySelector('.leftbar');
-            const toggleBtn = document.querySelector('.toggle-sidebar');
-            
-            if (sidebar.classList.contains('active') && 
-                !sidebar.contains(event.target) && 
-                !toggleBtn.contains(event.target)) {
-                sidebar.classList.remove('active');
-            }
-        });
-        </script>
-
-    </body>
+</body>
 </html>
