@@ -1,0 +1,423 @@
+/* ============================================================
+   style.css — 全局样式 + MC 风格 UI 组件
+   适用于 GitHub Pages 静态站点，所有页面共用
+   ============================================================ */
+
+/* ---------- CSS 变量 ---------- */
+:root {
+    --bg-dark: #1a1a2e;
+    --bg-panel: #222240;
+    --bg-nav: #0d0d1a;
+    --text-primary: #e0e0e0;
+    --text-muted: #999;
+    --accent: #cb4e4e;
+    --accent-hover: #a83d3d;
+    --border-color: #3a3a5a;
+    --slot-bg: #2a2a40;
+    --slot-border: #555;
+    --max-width: 1100px;
+    --nav-height: 56px;
+}
+
+/* ---------- 基础重置 ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.7;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- 全局导航栏 ---------- */
+.global-nav {
+    background: var(--bg-nav);
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
+}
+.nav-brand {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--accent);
+}
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 0.3rem;
+}
+.nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    transition: background 0.2s, color 0.2s;
+}
+.nav-links a:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+.nav-links a.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+}
+
+/* ---------- 主内容区 ---------- */
+.main-content {
+    max-width: var(--max-width);
+    width: 100%;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    flex: 1;
+}
+
+/* ---------- 全局页脚 ---------- */
+.global-footer {
+    background: var(--bg-nav);
+    text-align: center;
+    padding: 1.2rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+
+
+/* ---------- 地图卡片网格 ---------- */
+.map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+}
+.map-card {
+    background: var(--bg-panel);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+.map-card:hover {
+    border-color: var(--accent);
+}
+.map-card-image {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+}
+.map-card h3 {
+    padding: 0.6rem 1rem 0;
+    font-size: 1rem;
+}
+.map-card p {
+    padding: 0.3rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.map-card .mc-tag {
+    margin: 0 1rem 0.8rem;
+}
+
+/* ---------- 版本列表 ---------- */
+.version-list {
+    list-style: none;
+    padding: 0;
+}
+.version-item {
+    background: var(--slot-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.7rem 1rem;
+    margin: 0.5rem 0;
+}
+.version-meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-left: 0.8rem;
+}
+.version-date {
+    color: #888;
+    font-size: 0.78rem;
+    margin-left: 0.8rem;
+}
+.version-changelog {
+    margin-top: 0.4rem;
+    font-size: 0.82rem;
+    color: #aaa;
+}
+
+/* ---------- 文档布局（模板页） ---------- */
+.doc-layout {
+    display: flex;
+    max-width: var(--max-width);
+    width: 100%;
+    margin: 0 auto;
+    flex: 1;
+    min-height: 0;
+}
+.doc-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: #16162a;
+    border-right: 2px solid var(--border-color);
+    padding: 1.2rem;
+    overflow-y: auto;
+    position: sticky;
+    top: var(--nav-height);
+    height: calc(100vh - var(--nav-height));
+}
+.doc-sidebar h3 {
+    color: var(--accent);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+.sidebar-category {
+    color: #777;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1rem 0 0.3rem;
+    padding-left: 0.3rem;
+}
+.sidebar-link {
+    display: block;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0.35rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.88rem;
+    transition: background 0.15s, color 0.15s;
+}
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+.sidebar-link.active {
+    background: rgba(78, 203, 113, 0.2);
+    color: var(--accent);
+    font-weight: 600;
+}
+.doc-content {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* ---------- 文档内容样式 ---------- */
+.doc-content h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.doc-content h2 {
+    font-size: 1.4rem;
+    margin-top: 2rem;
+    color: var(--accent);
+}
+.doc-content h3 {
+    font-size: 1.15rem;
+    margin-top: 1.5rem;
+}
+.doc-content p {
+    margin: 0.8rem 0;
+}
+.doc-content code {
+    background: #2a2a40;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.9em;
+}
+.doc-content pre {
+    background: #0d0d1a;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+.doc-content pre code {
+    background: none;
+    padding: 0;
+}
+.doc-content table {
+    border-collapse: collapse;
+    margin: 1rem 0;
+    width: 100%;
+}
+.doc-content th,
+.doc-content td {
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.8rem;
+    text-align: left;
+}
+.doc-content th {
+    background: #2a2a40;
+}
+.doc-content blockquote {
+    border-left: 4px solid var(--accent);
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    background: rgba(78, 203, 113, 0.08);
+    border-radius: 0 4px 4px 0;
+}
+.doc-content a {
+    color: var(--accent);
+}
+
+/* ---------- Modrinth 输入行 ---------- */
+.modrinth-input-row {
+    display: flex;
+    gap: 0.6rem;
+    margin: 0.8rem 0;
+}
+.modrinth-input-row input {
+    flex: 1;
+    padding: 0.5rem 0.8rem;
+    background: var(--slot-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+.modrinth-input-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+    .doc-layout {
+        flex-direction: column;
+    }
+    .doc-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+    }
+    .doc-content {
+        padding: 1.2rem;
+    }
+    .nav-links {
+        gap: 0;
+    }
+    .nav-links a {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.82rem;
+    }
+    .mc-crafting-grid {
+        grid-template-columns: repeat(3, 44px);
+        grid-template-rows: repeat(3, 44px);
+    }
+    .mc-crafting-arrow {
+        right: -40px;
+    }
+    .mc-crafting-result {
+        right: -80px;
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* 像素图片显示 */
+.pixel-art {
+  image-rendering: auto;          /* 默认，作为回退 */
+  image-rendering: crisp-edges;   /* 适用于Firefox */
+  image-rendering: pixelated;     /* 适用于Chrome/Safari/Edge，放大时保持块状 */
+  /* 兼容旧浏览器的写法 */
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+
+/* ---------- 脚注样式 ---------- */
+.footnote-ref {
+    font-size: 0.7em;
+    vertical-align: super;
+    cursor: help;
+    color: #cb4e4e;
+    font-weight: 600;
+    transition: color 0.2s;
+    user-select: none;
+}
+.footnote-ref:hover {
+    color: #ff7a7a;
+}
+
+.footnotes {
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 2px solid #3a3a5a;
+}
+.footnotes h3 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #aaa;
+    margin-bottom: 0.8rem;
+}
+.footnotes ol {
+    padding-left: 1.8rem;
+    color: #c0c0d0;
+    font-size: 0.95rem;
+}
+.footnotes li {
+    margin-bottom: 0.6rem;
+    line-height: 1.5;
+}
+.footnotes li:target {
+    background: rgba(203, 78, 78, 0.15);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+/* 悬浮提示框（tooltip） */
+.footnote-tooltip {
+    position: fixed;
+    max-width: 320px;
+    background: #321e1e;
+    border: 1px solid #6a4a4a;
+    border-radius: 4px;
+    padding: 10px 14px;
+    color: #e8e8f0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    pointer-events: none;          /* 防止干扰鼠标事件 */
+    backdrop-filter: blur(4px);
+    transition: opacity 0.15s;
+}
+.footnote-tooltip p {
+    margin: 0.2rem 0;
+}
+.footnote-tooltip code {
+    background: #2a2a44;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.85em;
+}

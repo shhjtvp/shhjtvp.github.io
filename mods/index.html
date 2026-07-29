@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOD 下载 - MC 站点</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="global-nav">
+        <div class="nav-brand">⛏️ MC 站点</div>
+        <ul class="nav-links">
+            <li><a href="../index.html">首页</a></li>
+            <li><a href="../maps">地图</a></li>
+            <li><a href="../mods" class="active">Mods</a></li>
+            <li><a href="../collections.html">文档</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <h1>📦 MOD 下载</h1>
+        <p>通过 Modrinth API 获取 MOD 版本列表。</p>
+
+        <!-- Modrinth API 演示区域 -->
+        <div class="mc-panel" id="modrinth-section">
+            <h3>🔍 查询 Modrinth 项目版本</h3>
+            <p>输入 Modrinth 项目 ID（例如：<code>fabric-api</code>、<code>sodium</code>、<code>iris</code>）</p>
+            <div class="modrinth-input-row">
+                <input type="text" id="project-id-input" placeholder="输入项目 ID 或 slug..." value="sodium">
+                <button id="fetch-versions-btn" class="mc-btn">获取版本列表</button>
+            </div>
+            <div id="versions-loading" style="display:none;">⏳ 加载中...</div>
+            <div id="versions-error" style="display:none; color:#e74c3c;"></div>
+            <div id="versions-result"></div>
+        </div>
+    </main>
+
+    <footer class="global-footer">
+        <p>© 2026 MC 站点 | 基于 GitHub Pages 构建 | MOD 数据来自 Modrinth API</p>
+    </footer>
+
+    <script>
+        /**
+         * Modrinth API 调用模块
+         * 调用 https://api.modrinth.com/v2/project/{id}/version 获取版本列表
+         * 注意：浏览器环境下无法自定义 User-Agent 头（受浏览器安全策略限制），
+         * 此处使用 fetch 默认行为，Modrinth API 对 CORS 友好，可正常请求。
+         */
+        document.getElementById('fetch-versions-btn').addEventListener('click', fetchVersions);
+        // 页面加载时自动获取一次示例数据
+        window.addEventListener('DOMContentLoaded', fetchVersions);
+
+        async function fetchVersions() {
+            const projectId = document.getElementById('project-id-input').value.trim();
+            if (!projectId) {
+                showError('请输入项目 ID');
+                return;
+            }
+
+            const loadingEl = document.getElementById('versions-loading');
+            const errorEl = document.getElementById('versions-error');
+            const resultEl = document.getElementById('versions-result');
+
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            resultEl.innerHTML = '';
+
+            try {
+                const response = await fetch(
+                    `https://api.modrinth.com/v2/project/${encodeURIComponent(projectId)}/version`,
+                    {
+                        headers: {
+                            // 注意：浏览器不允许自定义 User-Agent，此行在浏览器环境中会被忽略
+                            // 如需在服务端使用，可取消注释下一行
+                            // 'User-Agent': 'MC-Site/1.0 (GitHub Pages; contact@example.com)'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`API 返回错误: ${response.status} ${response.statusText}`);
+                }
+
+                const versions = await response.json();
+                renderVersions(versions);
+            } catch (err) {
+                showError('获取版本失败: ' + err.message);
+                console.error('Modrinth API 错误:', err);
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        function renderVersions(versions) {
+            const resultEl = document.getElementById('versions-result');
+            if (!versions || versions.length === 0) {
+                resultEl.innerHTML = '<p>未找到任何版本。</p>';
+                return;
+            }
+
+            let html = `<p>共找到 <strong>${versions.length}</strong> 个版本：</p><ul class="version-list">`;
+            versions.slice(0, 20).forEach(v => {
+                const versionNumber = v.version_number || v.name || '未知版本';
+                const gameVersions = (v.game_versions || []).join(', ');
+                const loaders = (v.loaders || []).join(', ');
+                const dateStr = v.date_published ? new Date(v.date_published).toLocaleDateString('zh-CN') : '';
+                html += `
+                    <li class="version-item">
+                        <strong>${escapeHtml(versionNumber)}</strong>
+                        <span class="version-meta">MC: ${escapeHtml(gameVersions) || '—'} | 加载器: ${escapeHtml(loaders) || '—'}</span>
+                        ${dateStr ? `<span class="version-date">${dateStr}</span>` : ''}
+                        ${v.changelog ? `<details class="version-changelog"><summary>更新日志</summary>${escapeHtml(v.changelog.substring(0, 500))}</details>` : ''}
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            if (versions.length > 20) {
+                html += '<p><em>仅显示前20个版本...</em></p>';
+            }
+            resultEl.innerHTML = html;
+        }
+
+        function showError(msg) {
+            const errorEl = document.getElementById('versions-error');
+            errorEl.textContent = '❌ ' + msg;
+            errorEl.style.display = 'block';
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

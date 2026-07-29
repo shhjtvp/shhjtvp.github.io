@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档 - ο(=•ω＜=)ρ⌒☆</title>
+    <!-- highlight.js 样式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- mcfunction-highlight 样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mcfunction-highlight/dist/mcfunction-highlight.min.css">
+    <!-- 全局样式（与站点一致） -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 文档页专用补充样式（树形菜单、导航按钮等） -->
+    <style>
+        /* ---------- 树形侧边栏样式 ---------- */
+        .tree-root {
+            padding-left: 0;
+            list-style: none;
+            margin: 0;
+        }
+        .tree-root ul {
+            padding-left: 1.5rem;
+            list-style: none;
+        }
+        .tree-node {
+            margin: 0.2rem 0;
+        }
+        /* 文件夹节点：可点击的标题 */
+        .tree-folder > span {
+            cursor: pointer;
+            user-select: none;
+            display: inline-block;
+            padding: 0.2rem 0;
+            color: #b0b0c0;
+            transition: color 0.2s;
+        }
+        .tree-folder > span:hover {
+            color: #fff;
+        }
+        /* 文件夹图标：展开状态用 📂，折叠状态用 📁 */
+        .tree-folder > span::before {
+            content: "📂 ";
+            transition: transform 0.2s;
+        }
+        .tree-folder.collapsed > span::before {
+            content: "📁 ";
+        }
+        .tree-folder.collapsed > ul {
+            display: none;
+        }
+        /* 文档链接（与 style.css 中的 .sidebar-link 保持一致） */
+        .sidebar-link {
+            display: block;
+            padding: 0.2rem 0.5rem;
+            margin: 0.1rem 0;
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--text-muted, #99999960);
+            transition: background 0.2s, color 0.2s;
+            font-size: 0.88rem;
+        }
+        .sidebar-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+        .sidebar-link.active {
+            background: rgba(78, 203, 113, 0.2);
+            color: var(--accent, #cb4e4e);
+            font-weight: 600;
+        }
+
+        /* ====== Markdown 表格样式定制 ====== */
+        .doc-content table {
+            border-collapse: collapse;        /* 合并边框 */
+            width: 100%;
+            margin: 1.2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .doc-content th,
+        .doc-content td {
+            border: 2px solid #8a6a6a50;       /* 边框颜色 */
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        /* 表头样式：背景色与文字颜色 */
+        .doc-content th {
+            background-color: #5a3a3a80;        /* 顶栏背景色（深紫灰） */
+            color: #f0f0f0;                  /* 顶栏文字颜色（亮白） */
+            font-weight: 600;
+        }
+
+        /* 可选：表格行交替色（斑马纹） */
+        .doc-content tr:nth-child(even) {
+            background-color: #3a201e0e;        /* 偶数行浅色背景 */
+        }
+        .doc-content tr:nth-child(odd) {
+            background-color: #4022220e;        /* 奇数行背景（与卡片背景协调） */
+        }
+
+        /* 表头边框可独立调整（如有需要） */
+        .doc-content th {
+            border-bottom: 3px solid #aa8a8a; /* 加粗表头下边框 */
+        }
+
+        /* ---------- 文档内容中的导航按钮（上一章/下一章） ---------- */
+        .doc-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color, #3a3a5a);
+        }
+        .doc-nav a {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            background: var(--bg-panel, #222240);
+            color: var(--text-primary, #e0e0e0);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.1s;
+            border: 1px solid var(--border-color, #5a3a3a);
+        }
+        .doc-nav a:hover:not(.disabled) {
+            background: var(--accent, #cb4e4e);
+            color: #000;
+        }
+        .doc-nav a:active:not(.disabled) {
+            transform: scale(0.96);
+        }
+        .doc-nav .disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        /* ---------- 响应式兼容 ---------- */
+        @media (max-width: 768px) {
+            .doc-sidebar {
+                height: auto !important;
+                position: relative !important;
+                top: 0 !important;
+            }
+            .doc-content {
+                padding: 1.2rem !important;
+            }
+            .doc-nav {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .doc-nav a {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== 全局导航栏（与 style.css 一致） ========== -->
+    <nav class="global-nav">
+        <div class="nav-brand">红蘑菇hj</div>
+        <ul class="nav-links">
+            <li><a href="index.html">首页</a></li>
+            <li><a href="maps.html">地图展示</a></li>
+            <li><a href="mods.html">MOD 下载</a></li>
+            <li><a href="collections.html" class="active">文档</a></li>
+        </ul>
+    </nav>
+
+    <!-- ========== 页面布局：侧边栏 + 内容区 ========== -->
+    <div class="doc-layout">
+        <!-- 侧边栏 -->
+        <aside class="doc-sidebar" id="doc-sidebar">
+            <h3>目录</h3>
+            <div id="sidebar-loading">加载目录...</div>
+            <nav id="sidebar-nav"></nav>
+        </aside>
+
+        <!-- 主内容 -->
+        <main class="doc-content" id="doc-content">
+            <!-- 加载提示 -->
+            <div id="content-loading">正在加载文档喵...</div>
+            <div id="content-error" style="display:none; color:#e74c3c;"></div>
+            <!-- 文档正文 -->
+            <article id="content-body"></article>
+
+            <!-- ===== 上一章/下一章导航 ===== -->
+            <div class="doc-nav" id="doc-nav">
+                <a href="#" class="prev disabled" id="nav-prev">← 上一章</a>
+                <a href="#" class="next disabled" id="nav-next">下一章 →</a>
+            </div>
+
+            <!-- ===== Giscus 评论 ===== -->
+            <div id="giscus-container" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--border-color, #3a3a5a);">
+                <h3>💬 评论</h3>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========== 全局页脚 ========== -->
+    <footer class="global-footer">
+        <p>© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 文档由 marked.js 渲染</p>
+    </footer>
+
+    <!-- ========== 依赖脚本（CDN） ========== -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Giscus 评论组件 -->
+    <script src="https://giscus.app/client.js"
+            data-repo="shhjtvp/The-message-board-of-my-pages"
+            data-repo-id="R_kgDOTl8dyA"
+            data-category="General"
+            data-category-id="DIC_kwDOTl8dyM4DCJnE"
+            data-mapping="pathname"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="bottom"
+            data-theme="dark"
+            data-lang="zh-CN"
+            crossorigin="anonymous"
+            async>
+    </script>
+    <!-- mcfunction-highlight 代码高亮库 -->
+    <script src="https://cdn.jsdelivr.net/npm/mcfunction-highlight/dist/mcfunction-highlight.min.js">
+    </script>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- 工具函数 ----------
+            /** 安全转义 HTML */
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            /** 获取 URL 查询参数 */
+            function getParam(name) {
+                const params = new URLSearchParams(window.location.search);
+                return params.get(name);
+            }
+
+            // ---------- 读取 URL 参数 ----------
+            const pageName = getParam('page') || 'tutorial1';
+            const collectionId = getParam('collection') || '';   // 空表示使用根目录
+
+            /** 构建资源路径：根据 collection 拼接 */
+            function getCollectionPath(subPath) {
+                if (collectionId) {
+                    return `docs/${collectionId}/${subPath}`;
+                } else {
+                    return `docs/${subPath}`;
+                }
+            }
+
+            // ---------- 侧边栏：加载并渲染树形目录 ----------
+            async function loadSidebar(currentPage) {
+                const sidebarNav = document.getElementById('sidebar-nav');
+                const loadingEl = document.getElementById('sidebar-loading');
+
+                try {
+                    // 根据集合加载对应的 index.json
+                    const indexPath = getCollectionPath('index.json');
+                    const resp = await fetch(indexPath);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    const data = await resp.json();
+
+                    // 解析树形数据：支持新格式 { tree: [...] } 和旧格式 { docs: [...] }
+                    let tree = data.tree;
+                    if (!tree && data.docs && Array.isArray(data.docs)) {
+                        // 旧格式：将 docs 数组转为根目录下的叶子列表
+                        tree = data.docs.map(doc => ({
+                            title: doc.title || doc.file,
+                            file: doc.file
+                        }));
+                    }
+                    if (!tree || !Array.isArray(tree)) {
+                        throw new Error('无效的目录结构：缺少 tree 或 docs 字段');
+                    }
+
+                    // ---- 深度优先遍历，生成扁平文档列表（用于导航） ----
+                    const flatDocs = [];
+                    function traverse(node, path) {
+                        if (node.file) {
+                            // 叶子节点（文档）
+                            flatDocs.push({
+                                title: node.title,
+                                file: node.file,
+                                path: path.concat(node.title) // 保留路径（可用于面包屑）
+                            });
+                        }
+                        if (node.children && Array.isArray(node.children)) {
+                            node.children.forEach(child => traverse(child, path.concat(node.title)));
+                        }
+                    }
+                    tree.forEach(root => traverse(root, []));
+
+                    // ---- 渲染树形 HTML ----
+                    const html = buildTreeHTML(tree, currentPage);
+                    sidebarNav.innerHTML = html;
+                    loadingEl.style.display = 'none';
+
+                    // ---- 自动展开当前文档所在的文件夹路径 ----
+                    expandActivePath(sidebarNav, currentPage);
+
+                    // ---- 绑定文件夹折叠/展开事件 ----
+                    sidebarNav.querySelectorAll('.tree-folder > span').forEach(span => {
+                        span.addEventListener('click', function(e) {
+                            const folderNode = this.parentElement;
+                            folderNode.classList.toggle('collapsed');
+                            e.stopPropagation();
+                        });
+                    });
+
+                    // ---- 将扁平列表存入全局，供导航按钮使用 ----
+                    window.__flatDocs = flatDocs;
+
+                } catch (err) {
+                    loadingEl.textContent = '⚠️ 目录加载失败';
+                    console.error('侧边栏加载错误:', err);
+                }
+            }
+
+            /** 递归构建树形 HTML */
+            function buildTreeHTML(nodes, currentPage, isRoot = true) {
+                if (!nodes || nodes.length === 0) return '';
+                const tag = isRoot ? 'ul' : 'ul';
+                let html = `<${tag} class="tree-root">`;
+                for (const node of nodes) {
+                    const hasChildren = node.children && node.children.length > 0;
+                    const isFile = !!node.file;
+                    const liClass = hasChildren ? 'tree-node tree-folder' : 'tree-node tree-leaf';
+                    // 默认折叠，稍后通过 expandActivePath 自动展开
+                    const collapsedClass = hasChildren ? ' collapsed' : '';
+                    html += `<li class="${liClass}${collapsedClass}">`;
+
+                    if (hasChildren) {
+                        // 文件夹节点（点击标题展开/收起）
+                        html += `<span>${escapeHtml(node.title)}</span>`;
+                        html += buildTreeHTML(node.children, currentPage, false);
+                    } else if (isFile) {
+                        // 文档叶子节点
+                        const isActive = (node.file === currentPage + '.md' || node.file === currentPage);
+                        // 构建链接：保留 collection 参数
+                        let link = `template.html?page=${encodeURIComponent(node.file.replace(/\.md$/, ''))}`;
+                        if (collectionId) {
+                            link += `&collection=${encodeURIComponent(collectionId)}`;
+                        }
+                        html += `<a href="${link}" class="sidebar-link ${isActive ? 'active' : ''}">${escapeHtml(node.title)}</a>`;
+                    } else {
+                        // 空文件夹（无 children 也无 file）
+                        html += `<span>${escapeHtml(node.title)}</span>`;
+                    }
+                    html += '</li>';
+                }
+                html += `</${tag}>`;
+                return html;
+            }
+
+            /** 展开当前文档所在的文件夹路径（从根到叶） */
+            function expandActivePath(container, currentPage) {
+                // 查找高亮的链接
+                const links = container.querySelectorAll('.sidebar-link');
+                let activeLink = null;
+                for (const link of links) {
+                    if (link.classList.contains('active')) {
+                        activeLink = link;
+                        break;
+                    }
+                }
+                if (!activeLink) return;
+
+                // 从当前链接向上遍历父级 .tree-folder，移除 collapsed 类
+                let parent = activeLink.closest('.tree-folder');
+                while (parent) {
+                    parent.classList.remove('collapsed');
+                    parent = parent.parentElement?.closest('.tree-folder');
+                }
+            }
+
+            // ---------- 加载文档正文 ----------
+            async function loadDocument(pageName) {
+                const contentBody = document.getElementById('content-body');
+                const loadingEl = document.getElementById('content-loading');
+                const errorEl = document.getElementById('content-error');
+                const navPrev = document.getElementById('nav-prev');
+                const navNext = document.getElementById('nav-next');
+
+                try {
+                    const docPath = getCollectionPath(`${pageName}.md`);
+                    const resp = await fetch(docPath);
+                    if (!resp.ok) {
+                        throw new Error(`文档 "${pageName}.md" 不存在 (HTTP ${resp.status})`);
+                    }
+                    let markdown = await resp.text();
+                    // 1. 提取脚注定义 [^id]: content
+                    const footnotes = {};
+                    const footnoteOrder = [];      // 按引用顺序存储 id
+                    const processed = markdown.replace(/^\[\^([^\]]+)\]:\s*(.*)$/gm, (match, id, content) => {
+                        footnotes[id] = content.trim();
+                        return '';                // 移除定义行
+                    });
+
+                    // 2. 替换引用 [^id] 为带序号的上标，并记录顺序
+                    let counter = 0;
+                    const withRefs = processed.replace(/\[\^([^\]]+)\]/g, (match, id) => {
+                        if (footnotes.hasOwnProperty(id)) {
+                            counter++;
+                            footnoteOrder.push(id);
+                            return `<sup class="footnote-ref" data-fn-id="${id}" data-fn-num="${counter}">[${counter}]</sup>`;
+                        }
+                        return match;             // 未定义则保留原文
+                    });
+
+                    // 3. 渲染 Markdown
+                    const html = marked.parse(withRefs);
+
+                    // 4. 构建脚注列表 HTML（渲染每个脚注内容）
+                    let footnoteHtml = '';
+                    if (footnoteOrder.length > 0) {
+                        footnoteHtml = `<div class="footnotes"><h3>脚注 Footnote</h3><ol>`;
+                        for (const id of footnoteOrder) {
+                            const content = footnotes[id];
+                            // 脚注内容可能包含 Markdown，单独渲染
+                            const renderedContent = marked.parse(content);
+                            footnoteHtml += `<li id="fn-${id}">${renderedContent}</li>`;
+                        }
+                        footnoteHtml += `</ol></div>`;
+                    }
+
+                    // 5. 将正文和脚注列表合并
+                    const finalHtml = html + footnoteHtml;
+                    contentBody.innerHTML = finalHtml;
+                    loadingEl.style.display = 'none';
+
+                    // ========== 为脚注角标绑定悬浮事件 ==========
+                    if (footnoteOrder.length > 0) {
+                        const refs = contentBody.querySelectorAll('.footnote-ref');
+                        refs.forEach(sup => {
+                            const id = sup.dataset.fnId;
+                            const content = footnotes[id];
+                            if (!content) return;
+
+                            let tooltipEl = null;
+
+                            sup.addEventListener('mouseenter', function(e) {
+                                // 如果已有tooltip则移除
+                                if (tooltipEl) tooltipEl.remove();
+
+                                tooltipEl = document.createElement('div');
+                                tooltipEl.className = 'footnote-tooltip';
+                                // 渲染脚注内容（支持 Markdown）
+                                tooltipEl.innerHTML = marked.parse(content);
+
+                                // 定位：显示在角标下方偏右
+                                const rect = this.getBoundingClientRect();
+                                let top = rect.bottom + window.scrollY + 6;
+                                let left = rect.left + window.scrollX;
+
+                                // 防止溢出右侧
+                                const tooltipWidth = 320;
+                                if (left + tooltipWidth > window.innerWidth - 10) {
+                                    left = window.innerWidth - tooltipWidth - 10;
+                                }
+                                // 防止溢出底部
+                                const tooltipHeight = tooltipEl.scrollHeight || 200;
+                                if (top + tooltipHeight + 10 > window.innerHeight + window.scrollY) {
+                                    top = rect.top + window.scrollY - tooltipHeight - 6;
+                                }
+
+                                tooltipEl.style.top = top + 'px';
+                                tooltipEl.style.left = left + 'px';
+                                document.body.appendChild(tooltipEl);
+                            });
+
+                            sup.addEventListener('mouseleave', function() {
+                                if (tooltipEl) {
+                                    tooltipEl.remove();
+                                    tooltipEl = null;
+                                }
+                            });
+                        });
+                    }
+
+        // ========== 后续原有逻辑（更新标题、导航按钮等） ==========
+        const firstH1 = contentBody.querySelector('h1');
+        if (firstH1) {
+            document.title = firstH1.textContent + ' - MC 站点文档';
+        }
+        updateNavButtons(pageName);
+
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = '❌ ' + err.message;
+        console.error('文档加载错误:', err);
+    }
+}
+
+            /** 根据扁平文档列表更新导航按钮 */
+            function updateNavButtons(currentPage) {
+                const flat = window.__flatDocs || [];
+                const navPrev = document.getElementById('nav-prev');
+                const navNext = document.getElementById('nav-next');
+
+                // 查找当前文档在列表中的索引（匹配 file 字段）
+                const idx = flat.findIndex(doc => doc.file === currentPage + '.md' || doc.file === currentPage);
+
+                if (idx === -1) {
+                    // 当前文档不在列表中，禁用两个按钮
+                    navPrev.classList.add('disabled');
+                    navNext.classList.add('disabled');
+                    return;
+                }
+
+                // 上一章
+                if (idx > 0) {
+                    const prev = flat[idx - 1];
+                    let link = `template.html?page=${encodeURIComponent(prev.file.replace(/\.md$/, ''))}`;
+                    if (collectionId) link += `&collection=${encodeURIComponent(collectionId)}`;
+                    navPrev.href = link;
+                    navPrev.textContent = `← ${prev.title}`;
+                    navPrev.classList.remove('disabled');
+                } else {
+                    navPrev.classList.add('disabled');
+                    navPrev.textContent = '← 已是第一章';
+                    navPrev.href = '#';
+                }
+
+                // 下一章
+                if (idx < flat.length - 1) {
+                    const next = flat[idx + 1];
+                    let link = `template.html?page=${encodeURIComponent(next.file.replace(/\.md$/, ''))}`;
+                    if (collectionId) link += `&collection=${encodeURIComponent(collectionId)}`;
+                    navNext.href = link;
+                    navNext.textContent = `${next.title} →`;
+                    navNext.classList.remove('disabled');
+                } else {
+                    navNext.classList.add('disabled');
+                    navNext.textContent = '已是最后一章 →';
+                    navNext.href = '#';
+                }
+            }
+
+            // ---------- 初始化 marked 配置 ----------
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang) && lang !== 'mcfunction') {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (e) {
+                            console.warn('代码高亮失败:', e);
+                        }
+                    }
+                    try {
+                        return hljs.highlightAuto(code).value;
+                    } catch (e) {
+                        return code;
+                    }
+                }
+            });
+
+            // ---------- 启动 ----------
+            // 加载侧边栏
+            loadSidebar(pageName);
+            // 加载文档
+            loadDocument(pageName);
+
+            // 等待 DOM 完全加载后初始化 mcfunction-highlight（自动扫描）
+            window.addEventListener('DOMContentLoaded', () => {
+                if (typeof MCFunctionHighlight !== 'undefined') {
+                    MCFunctionHighlight.init({ autoUpdate: true });
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

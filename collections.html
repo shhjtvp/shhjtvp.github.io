@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档集合 - MC 站点</title>
+    <!-- 独立样式，不与站点全局样式混用 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 2rem 1.5rem;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            flex: 1;
+        }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-bottom: 0.3rem;
+            color: #cb4e4e;
+        }
+        .sub {
+            color: #aaa;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.8rem;
+        }
+        .card {
+            background: #222240;
+            padding: 1.8rem 1.5rem;
+            border-radius: 16px;
+            border: 1px solid #3a3a5a;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+            border-color: #cb4e4e;
+        }
+        .card h2 {
+            font-size: 1.6rem;
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+            color: #fff;
+        }
+        .card p {
+            color: #b0b0c8;
+            font-size: 0.95rem;
+            margin: 0.5rem 0 1.2rem;
+            flex: 1;
+        }
+        .card a {
+            display: inline-block;
+            background: #cb4e4e;
+            color: #000;
+            padding: 0.4rem 1.6rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s, transform 0.1s;
+            align-self: flex-start;
+        }
+        .card a:hover {
+            background: #d85f5f;
+            transform: scale(1.02);
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+            font-size: 1.2rem;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 1.5rem;
+            background: #2a1a1a;
+            border-radius: 8px;
+            border: 1px solid #e74c3c;
+        }
+        footer {
+            margin-top: 3.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            border-top: 1px solid #2a2a40;
+            padding-top: 1.8rem;
+            width: 100%;
+        }
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2rem; }
+            .grid { grid-template-columns: 1fr; }
+            .card { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文档集合</h1>
+        <a href="index.html" style="padding: 20px; color:#4ecb71">返回首页</a><br><br>
+        <hr /><br>
+        <p class="sub">选择以下文档集之一，开始阅读</p>
+
+        <!-- 卡片网格 -->
+        <div id="collection-grid" class="grid">
+            <div class="loading">⏳ 加载集合列表...</div>
+        </div>
+
+        <footer>© 2026 红蘑菇hj · 文档集合</footer>
+    </div>
+
+    <script>
+        (function() {
+            const grid = document.getElementById('collection-grid');
+
+            /** 安全转义 */
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            async function loadCollections() {
+                try {
+                    const resp = await fetch('docs/collections.json');
+                    if (!resp.ok) {
+                        throw new Error(`HTTP ${resp.status} - 无法加载集合注册表`);
+                    }
+                    const collections = await resp.json();
+
+                    // 校验数据格式
+                    if (!Array.isArray(collections) || collections.length === 0) {
+                        grid.innerHTML = '<div class="error">⚠️ 暂无可用文档集，请检查 docs/collections.json</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    for (const coll of collections) {
+                        const { id, title, description, entry } = coll;
+                        if (!id || !title) {
+                            console.warn('集合配置缺少 id 或 title，已跳过:', coll);
+                            continue;
+                        }
+                        // 构建跳转链接，默认 entry 为空时使用空字符串（将回退到 tutorial1）
+                        const entryPage = entry || '';
+                        const link = `template.html?collection=${encodeURIComponent(id)}&page=${encodeURIComponent(entryPage)}`;
+                        html += `
+                            <div class="card">
+                                <div>
+                                    <h2>${escapeHtml(title)}</h2>
+                                    <p>${escapeHtml(description || '')}</p>
+                                </div>
+                                <a href="${link}">进入阅读 →</a>
+                            </div>
+                        `;
+                    }
+                    grid.innerHTML = html;
+                } catch (err) {
+                    grid.innerHTML = `<div class="error">❌ 加载失败：${escapeHtml(err.message)}</div>`;
+                    console.error('集合加载错误:', err);
+                }
+            }
+
+            loadCollections();
+        })();
+    </script>
+</body>
+</html>
