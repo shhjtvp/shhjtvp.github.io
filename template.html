@@ -11,6 +11,8 @@
     <!-- 全局样式（与站点一致） -->
     <link rel="stylesheet" href="css/style.css">
     <!-- 文档页专用补充样式（树形菜单、导航按钮等） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="js/minecraft.js"></script>
     <style>
         /* ---------- 树形侧边栏样式 ---------- */
         .tree-root {
@@ -195,6 +197,21 @@
             <!-- ===== Giscus 评论 ===== -->
             <div id="giscus-container" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--border-color, #3a3a5a);">
                 <h3>💬 评论</h3>
+                <script src="https://giscus.app/client.js"
+                        data-repo="shhjtvp/The-message-board-of-my-pages"
+                        data-repo-id="R_kgDOTl8dyA"
+                        data-category="General"
+                        data-category-id="DIC_kwDOTl8dyM4DCJnE"
+                        data-mapping="pathname"
+                        data-strict="0"
+                        data-reactions-enabled="1"
+                        data-emit-metadata="0"
+                        data-input-position="bottom"
+                        data-theme="dark"
+                        data-lang="zh-CN"
+                        crossorigin="anonymous"
+                        async>
+                </script>
             </div>
         </main>
     </div>
@@ -208,21 +225,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <!-- Giscus 评论组件 -->
-    <script src="https://giscus.app/client.js"
-            data-repo="shhjtvp/The-message-board-of-my-pages"
-            data-repo-id="R_kgDOTl8dyA"
-            data-category="General"
-            data-category-id="DIC_kwDOTl8dyM4DCJnE"
-            data-mapping="pathname"
-            data-strict="0"
-            data-reactions-enabled="1"
-            data-emit-metadata="0"
-            data-input-position="bottom"
-            data-theme="dark"
-            data-lang="zh-CN"
-            crossorigin="anonymous"
-            async>
-    </script>
+    
     <!-- mcfunction-highlight 代码高亮库 -->
     <script src="https://cdn.jsdelivr.net/npm/mcfunction-highlight/dist/mcfunction-highlight.min.js">
     </script>
