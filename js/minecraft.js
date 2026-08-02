@@ -1,43 +1,119 @@
 // js/minecraft.js
-// 完全基于 Three.js CDN 的 Minecraft 方块渲染自定义元素 <block>
-// 支持模型继承、纹理着色 (颜色图) 与等轴测正交渲染
-// 版本: 适配 Minecraft 1.20+ 资源包结构 (26.2 规范)
+// 支持多材质包：<mc-block src="packname"> 加载 mc_textures/packname.zip
+// 默认材质包：26.2-Fabric 0.19.3
+// 保留 HTTP 回退，模型加载失败时自动尝试 item/ 路径
 
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-// ---------- 路径配置 ----------
-const ASSETS_ROOT = '/mc_textures/26.2-Fabric 0.19.3/assets/minecraft';
-const MODELS_BASE = `${ASSETS_ROOT}/models/`;
-const TEXTURES_BASE = `${ASSETS_ROOT}/textures/`;
-const COLOR_MAP_PATH = `${TEXTURES_BASE}colormap/`;
+// ---------- 全局依赖 ----------
+const JSZip = window.JSZip;
+
+// ---------- 常量 ----------
+const DEFAULT_PACK = '26.2-Fabric 0.19.3';
+const ZIP_BASE_PATH = '/mc_textures/';          // ZIP 存放目录
+
+// ---------- 材质包缓存 ----------
+const packCache = new Map(); // 键: packName, 值: { zipFile, loaded, promise }
+
+function getPackCache(packName) {
+    if (!packCache.has(packName)) {
+        packCache.set(packName, {
+            zipFile: null,
+            loaded: false,
+            promise: null,
+        });
+    }
+    return packCache.get(packName);
+}
+
+async function loadPack(packName) {
+    const cache = getPackCache(packName);
+    if (cache.loaded) return;
+    if (cache.promise) return cache.promise;
+
+    cache.promise = (async () => {
+        try {
+            const zipUrl = `${ZIP_BASE_PATH}${encodeURIComponent(packName)}.zip`;
+            const response = await fetch(zipUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            const zip = await JSZip.loadAsync(blob);
+            cache.zipFile = zip;
+            cache.loaded = true;
+            console.log(`✅ 材质包 "${packName}" 加载成功，共 ${Object.keys(zip.files).length} 个文件`);
+        } catch (err) {
+            console.error(`❌ 材质包 "${packName}" 加载失败，将回退到 HTTP 加载`, err);
+            cache.loaded = false;
+            cache.zipFile = null;
+        } finally {
+            cache.promise = null;
+        }
+    })();
+
+    return cache.promise;
+}
+
+async function readFromPack(packName, path, type = 'string') {
+    const cache = getPackCache(packName);
+    if (!cache.loaded || !cache.zipFile) {
+        throw new Error(`材质包 "${packName}" 未加载或加载失败`);
+    }
+    // 1. 直接尝试原路径
+    let file = cache.zipFile.file(path);
+    if (file) return file.async(type);
+
+    // 2. 尝试常见顶层目录（去掉可能的 packName 前缀）
+    const possiblePrefixes = [
+        '', // 已经尝试过
+        `${packName}/`,
+        `${packName.replace(/ /g, '_')}/`, // 有时空格被替换
+    ];
+    for (const prefix of possiblePrefixes) {
+        if (prefix && path.startsWith(prefix)) continue; // 避免重复
+        const altPath = prefix + path;
+        file = cache.zipFile.file(altPath);
+        if (file) return file.async(type);
+    }
+    // 3. 如果还找不到，遍历所有文件路径，查找以 'assets/minecraft/models/' 结尾的匹配
+    //    这是一种 fallback，性能稍差，但可靠
+    const allFiles = Object.keys(cache.zipFile.files);
+    const matchingPath = allFiles.find(f => f.endsWith(path));
+    if (matchingPath) {
+        file = cache.zipFile.file(matchingPath);
+        if (file) return file.async(type);
+    }
+
+    throw new Error(`材质包 "${packName}" 中找不到文件: ${path}`);
+}
 
 // ---------- 工具函数 ----------
-/** 将命名空间路径转为模型 JSON 的绝对 URL */
-function modelUrl(modelPath) {
+function getAssetsRoot(packName) {
+    return `/mc_textures/${packName}/assets/minecraft`;
+}
+
+function getModelUrl(packName, modelPath) {
     let path = modelPath;
     if (path.startsWith('minecraft:')) path = path.slice(10);
-    return `${MODELS_BASE}${encodeURI(path)}.json`;
+    return `${getAssetsRoot(packName)}/models/${encodeURI(path)}.json`;
 }
 
-/** 将纹理引用转为纹理图片的绝对 URL */
-function textureUrl(textureRef) {
+function getTextureUrl(packName, textureRef) {
     let path = textureRef;
     if (path.startsWith('minecraft:')) path = path.slice(10);
-    return `${TEXTURES_BASE}${encodeURI(path)}.png`;
+    return `${getAssetsRoot(packName)}/textures/${encodeURI(path)}.png`;
 }
 
-/** 角度转弧度 */
 const deg = Math.PI / 180;
 
 // ---------- 缓存 ----------
-const modelCache = new Map();      // url -> Promise<object>
-const textureCache = new Map();    // url -> Promise<THREE.Texture>
-const colormapCache = {};         // 'grass' | 'foliage' -> Promise<{r,g,b}>
+const modelCache = new Map();   // key: "packName|blockId" -> Promise<object>
+const textureCache = new Map(); // key: "packName|path|tint" -> Promise<THREE.Texture>
+const colormapCache = new Map(); // key: "packName|type" -> Promise<{r,g,b}>
 
-// 错误纹理（粉紫）
 function createErrorTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 16; canvas.height = 16;
+    canvas.width = 16;
+    canvas.height = 16;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#FF00FF';
     ctx.fillRect(0, 0, 16, 16);
@@ -48,231 +124,322 @@ function createErrorTexture() {
 }
 const ERROR_TEXTURE = createErrorTexture();
 
-// ---------- 颜色图处理 ----------
-async function loadColormap(type) {
-    if (!colormapCache[type]) {
-        const url = `${COLOR_MAP_PATH}${encodeURI(type)}.png`;
-        colormapCache[type] = new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                // 采样中心像素 (0.5, 0.5)
-                const cx = Math.floor(img.width / 2);
-                const cy = Math.floor(img.height / 2);
-                const pixel = ctx.getImageData(cx, cy, 1, 1).data;
-                resolve({ r: pixel[0] / 255, g: pixel[1] / 255, b: pixel[2] / 255 });
-            };
-            img.onerror = reject;
-            img.src = url;
-        }).catch(err => {
-            console.warn(`无法加载颜色图 ${type}，使用默认颜色`, err);
-            // 回退默认颜色
-            if (type === 'grass') return { r: 0.569, g: 0.741, b: 0.349 }; // #91BD59
-            if (type === 'foliage') return { r: 0.467, g: 0.671, b: 0.184 }; // #77AB2F
+// ---------- 颜色图 ----------
+async function loadColormap(packName, type) {
+    const cacheKey = `${packName}|${type}`;
+    if (colormapCache.has(cacheKey)) return colormapCache.get(cacheKey);
+
+    const promise = (async () => {
+        try {
+            let img;
+            const zipPath = `assets/minecraft/textures/colormap/${encodeURI(type)}.png`;
+            const cache = getPackCache(packName);
+            if (cache.loaded && cache.zipFile) {
+                const blob = await readFromPack(packName, zipPath, 'blob');
+                const url = URL.createObjectURL(blob);
+                img = await loadImage(url);
+                URL.revokeObjectURL(url);
+            } else {
+                const url = `${getAssetsRoot(packName)}/textures/colormap/${encodeURI(type)}.png`;
+                img = await loadImage(url);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const cx = Math.floor(img.width / 2);
+            const cy = Math.floor(img.height / 2);
+            const pixel = ctx.getImageData(cx, cy, 1, 1).data;
+            return { r: pixel[0] / 255, g: pixel[1] / 255, b: pixel[2] / 255 };
+        } catch (err) {
+            console.warn(`无法加载颜色图 ${type} (材质包 ${packName})，使用默认颜色`, err);
+            if (type === 'grass') return { r: 0.569, g: 0.741, b: 0.349 };
+            if (type === 'foliage') return { r: 0.467, g: 0.671, b: 0.184 };
             return { r: 1, g: 1, b: 1 };
-        });
-    }
-    return colormapCache[type];
+        }
+    })();
+
+    colormapCache.set(cacheKey, promise);
+    return promise;
 }
 
-/** 判断纹理是否需要颜色图着色，返回类型或null */
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
 function getTintType(texturePath) {
     const lower = texturePath.toLowerCase();
-    // 草方块顶部/侧面/本体 (排除雪覆盖变种)
-    if ((lower.includes('grass_block') && !lower.includes('snow')) || lower.includes('grass_block_top') || lower.includes('grass_block_side')) {
+    if ((lower.includes('grass_block') && !lower.includes('snow')) ||
+        lower.includes('grass_block_top') || lower.includes('grass_block_side')) {
         return 'grass';
     }
-    // 树叶
     if (lower.includes('leaves') || lower.includes('leaf')) {
         return 'foliage';
     }
-    // 高草丛等
     if (lower.includes('tall_grass') || lower.includes('fern') || lower.includes('vine')) {
         return 'grass';
     }
     return null;
 }
 
-/** 加载纹理并应用颜色着色 */
-async function loadTexture(url, tintType = null) {
-    const key = `${url}||tint:${tintType || 'none'}`;
-    if (textureCache.has(key)) return textureCache.get(key).then(tex => tex.clone()); // 返回克隆，避免共享问题
+// ---------- 纹理加载 ----------
+async function loadTexture(packName, textureRef, tintType = null) {
+    let path = textureRef;
+    if (path.startsWith('minecraft:')) path = path.slice(10);
+    const zipPath = `assets/minecraft/textures/${path}.png`;
+    const cacheKey = `${packName}|${zipPath}|tint:${tintType || 'none'}`;
 
-    const promise = new Promise(async (resolve, reject) => {
+    if (textureCache.has(cacheKey)) {
+        const tex = await textureCache.get(cacheKey);
+        return tex.clone();
+    }
+
+    const promise = (async () => {
+        let img;
+        let blobUrl = null;
         try {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                if (tintType) {
-                    const tint = await loadColormap(tintType);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imageData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        data[i] = Math.min(255, data[i] * tint.r);
-                        data[i + 1] = Math.min(255, data[i + 1] * tint.g);
-                        data[i + 2] = Math.min(255, data[i + 2] * tint.b);
-                        // alpha 保持不变
-                    }
-                    ctx.putImageData(imageData, 0, 0);
+            const cache = getPackCache(packName);
+            if (cache.loaded && cache.zipFile) {
+                try {
+                    const blob = await readFromPack(packName, zipPath, 'blob');
+                    blobUrl = URL.createObjectURL(blob);
+                    img = await loadImage(blobUrl);
+                } catch (zipErr) {
+                    console.warn(`ZIP读取纹理失败 ${zipPath}，回退HTTP`, zipErr);
+                    const url = getTextureUrl(packName, textureRef);
+                    img = await loadImage(url);
                 }
+            } else {
+                const url = getTextureUrl(packName, textureRef);
+                img = await loadImage(url);
+            }
 
-                const texture = new THREE.CanvasTexture(canvas);
+            // ===== 新增：裁剪为 16x16 =====
+            let imgSource = img;
+            if (img.width !== 16 || img.height !== 16) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 16;
+                canvas.height = 16;
+                const ctx = canvas.getContext('2d');
+                // 取左上角 16x16 区域
+                ctx.drawImage(img, 0, 0, 16, 16, 0, 0, 16, 16);
+                imgSource = canvas;
+                // 注意：如果后续有颜色图处理，使用 imgSource 作为图像源
+            }
+
+            // 如果不需要染色，直接使用 imgSource
+            if (!tintType) {
+                const texture = new THREE.CanvasTexture(imgSource);
                 texture.magFilter = THREE.NearestFilter;
                 texture.minFilter = THREE.NearestFilter;
                 texture.colorSpace = THREE.SRGBColorSpace;
-                resolve(texture);
-            };
-            img.onerror = () => {
-                console.warn(`纹理加载失败: ${url}`);
-                resolve(ERROR_TEXTURE.clone());
-            };
-            img.src = url;
-        } catch (e) {
-            console.warn(`纹理处理异常: ${url}`, e);
-            resolve(ERROR_TEXTURE.clone());
-        }
-    });
-
-    textureCache.set(key, promise);
-    return promise;
-}
-
-// ---------- 模型加载与继承解析 ----------
-async function loadModel(blockId) {
-    // 补全命名空间
-    if (!blockId.includes(':')) blockId = 'minecraft:' + blockId;
-    const item = blockId.replace('minecraft:', '');
-    const url = modelUrl(item.startsWith('block/') ? item : `block/${item}`);
-
-    if (modelCache.has(url)) return modelCache.get(url);
-
-    const promise = (async () => {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`模型 404: ${url}`);
-            const json = await response.json();
-            let textures = {};
-            let elements = null;
-            let display = null;
-
-            // 递归解析父模型
-            if (json.parent) {
-                const parentData = await loadModel(json.parent);
-                textures = { ...parentData.textures };
-                elements = parentData.elements;
-                display = parentData.display;
+                if (blobUrl) URL.revokeObjectURL(blobUrl);
+                return texture;
             }
 
-            // 子模型纹理覆盖
-            if (json.textures) {
-                Object.assign(textures, json.textures);
+            // 染色逻辑：使用 imgSource（已裁剪）
+            const tint = await loadColormap(packName, tintType);
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgSource, 0, 0, 16, 16);  // 直接绘制 16x16 图像
+            const imageData = ctx.getImageData(0, 0, 16, 16);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, data[i] * tint.r);
+                data[i + 1] = Math.min(255, data[i + 1] * tint.g);
+                data[i + 2] = Math.min(255, data[i + 2] * tint.b);
             }
-            // 子模型 elements 覆盖
-            if (json.elements) {
-                elements = json.elements;
-            }
-            // 子模型 display 覆盖
-            if (json.display) {
-                display = { ...display, ...json.display };
-            }
-
-            const result = { textures, elements, display };
-            modelCache.set(url, result);
-            return result;
-        } catch (e) {
-            console.warn(`模型加载失败: ${blockId}`, e);
-            const fallback = { textures: {}, elements: null, display: null };
-            modelCache.set(url, fallback);
-            return fallback;
+            ctx.putImageData(imageData, 0, 0);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            return texture;
+        } catch (err) {
+            console.warn(`纹理加载失败: ${textureRef} (材质包 ${packName})，使用错误纹理`, err);
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            return ERROR_TEXTURE.clone();
         }
     })();
 
-    modelCache.set(url, promise);
+    textureCache.set(cacheKey, promise);
+    return promise;
+}
+
+// ---------- 模型加载（支持 block/ 和 item/ 回退） ----------
+async function loadModel(packName, blockId) {
+    if (!blockId.includes(':')) blockId = 'minecraft:' + blockId;
+    const item = blockId.replace('minecraft:', '');
+    const basePath = item.startsWith('block/') ? item : `block/${item}`;
+    const cacheKey = `${packName}|${blockId}`;
+
+    if (modelCache.has(cacheKey)) return modelCache.get(cacheKey);
+
+    const promise = (async () => {
+        // 尝试加载模型，若 block/ 失败则尝试 item/
+        let jsonData = null;
+        let usedPath = null;
+        const attempts = [basePath, `item/${item}`]; // 注意 item/ 不带 "block/" 前缀
+        for (const tryPath of attempts) {
+            try {
+                const zipPath = `assets/minecraft/models/${tryPath}.json`;
+                const cache = getPackCache(packName);
+                if (cache.loaded && cache.zipFile) {
+                    const text = await readFromPack(packName, zipPath, 'string');
+                    jsonData = JSON.parse(text);
+                    usedPath = tryPath;
+                    break;
+                } else {
+                    // HTTP 回退
+                    const url = getModelUrl(packName, tryPath);
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    jsonData = await resp.json();
+                    usedPath = tryPath;
+                    break;
+                }
+            } catch (e) {
+                // 继续尝试下一个路径
+                continue;
+            }
+        }
+
+        if (!jsonData) {
+            console.warn(`模型加载失败: ${blockId} (材质包 ${packName})，所有路径尝试均失败，使用空模型`);
+            return { textures: {}, elements: null, display: null };
+        }
+
+        // 递归解析父模型
+        let textures = {};
+        let elements = null;
+        let display = null;
+
+        if (jsonData.parent) {
+            const parentData = await loadModel(packName, jsonData.parent);
+            textures = { ...parentData.textures };
+            elements = parentData.elements;
+            display = parentData.display;
+        }
+
+        if (jsonData.textures) {
+            Object.assign(textures, jsonData.textures);
+        }
+        if (jsonData.elements) {
+            elements = jsonData.elements;
+        }
+        if (jsonData.display) {
+            display = { ...display, ...jsonData.display };
+        }
+
+        return { textures, elements, display };
+    })();
+
+    modelCache.set(cacheKey, promise);
     return promise;
 }
 
 // ---------- 几何体生成 ----------
-function createFaceGeometry(faceDir, from, to, uv) {
+function createFaceGeometry(faceDir, from, to, uv, rotation) {
     const min = new THREE.Vector3().fromArray(from).multiplyScalar(1 / 16);
     const max = new THREE.Vector3().fromArray(to).multiplyScalar(1 / 16);
     let vertices;
-
     switch (faceDir) {
-        case 'up': // Y+
+        case 'up':
             vertices = [
                 [min.x, max.y, max.z], [max.x, max.y, max.z],
                 [max.x, max.y, min.z], [min.x, max.y, min.z]
             ]; break;
-        case 'down': // Y-
+        case 'down':
             vertices = [
                 [min.x, min.y, min.z], [max.x, min.y, min.z],
                 [max.x, min.y, max.z], [min.x, min.y, max.z]
             ]; break;
-        case 'north': // Z-
+        case 'north':
             vertices = [
                 [min.x, min.y, min.z], [max.x, min.y, min.z],
                 [max.x, max.y, min.z], [min.x, max.y, min.z]
             ]; break;
-        case 'south': // Z+
+        case 'south':
             vertices = [
                 [min.x, min.y, max.z], [max.x, min.y, max.z],
                 [max.x, max.y, max.z], [min.x, max.y, max.z]
             ]; break;
-        case 'west': // X-
+        case 'west':
             vertices = [
                 [min.x, min.y, min.z], [min.x, min.y, max.z],
                 [min.x, max.y, max.z], [min.x, max.y, min.z]
             ]; break;
-       case 'east': // X+
+        case 'east':
             vertices = [
-                [max.x, min.y, min.z], // 左下
-                [max.x, min.y, max.z], // 右下
-                [max.x, max.y, max.z], // 右上
-                [max.x, max.y, min.z]  // 左上
+                [max.x, min.y, min.z], [max.x, min.y, max.z],
+                [max.x, max.y, max.z], [max.x, max.y, min.z]
             ]; break;
         default: return null;
     }
 
+    // ---- 处理 UV 旋转 ----
+    if (!uv) uv = [0, 0, 16, 16];
+    let [u1, v1, u2, v2] = uv;
+    // 归一化到 0-1
+    u1 /= 16; v1 /= 16; u2 /= 16; v2 /= 16;
+    // 四个角点：顺序与 vertices 对应
+    let uvPoints = [
+        [u1, v1], // 顶点0
+        [u2, v1], // 顶点1
+        [u2, v2], // 顶点2
+        [u1, v2]  // 顶点3
+    ];
+
+    // 如果有旋转，应用旋转（围绕中心 0.5,0.5）
+    if (rotation && rotation !== 0) {
+        const angle = rotation * Math.PI / 180;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        uvPoints = uvPoints.map(([u, v]) => {
+            const du = u - 0.5;
+            const dv = v - 0.5;
+            return [
+                0.5 + du * cos - dv * sin,
+                0.5 + du * sin + dv * cos
+            ];
+        });
+    }
+
+    // 展平为数组
+    const uvs = uvPoints.flat();
+
+    // 构建几何体
     const geom = new THREE.BufferGeometry();
     const pos = [];
     vertices.forEach(v => pos.push(...v));
     geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geom.setIndex([0, 1, 2, 0, 2, 3]);
-
-    // UV 处理
-    if (!uv) uv = [0, 0, 16, 16];
-    const [u1, v1, u2, v2] = uv;
-    const uvs = [
-        u1 / 16, v1 / 16,
-        u2 / 16, v1 / 16,
-        u2 / 16, v2 / 16,
-        u1 / 16, v2 / 16
-    ];
     geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geom.computeVertexNormals();
     return geom;
 }
 
-// ---------- 完整场景构建 ----------
-async function buildBlockScene(blockId) {
-    const modelData = await loadModel(blockId);
+// ---------- 场景构建 ----------
+async function buildBlockScene(packName, blockId) {
+    const modelData = await loadModel(packName, blockId);
     if (!modelData.elements) {
-        console.warn(`方块 ${blockId} 没有 elements，无法渲染`);
+        console.warn(`方块 ${blockId} (材质包 ${packName}) 没有 elements，显示错误占位`);
         return null;
     }
 
     const { textures, elements, display } = modelData;
+
+    // 解析纹理变量
     const resolvedTextures = {};
     for (const [key, value] of Object.entries(textures)) {
         let resolved = value;
@@ -282,64 +449,56 @@ async function buildBlockScene(blockId) {
             if (textures[refKey]) {
                 resolved = textures[refKey];
             } else {
-                console.warn(`无法解析纹理变量 ${resolved}，使用错误纹理`);
                 resolved = 'minecraft:block/missing';
                 break;
             }
             depth++;
         }
-        if (resolved.startsWith('#')) {
-            resolved = 'minecraft:block/missing'; // 最终仍未解析则回退
-        }
+        if (resolved.startsWith('#')) resolved = 'minecraft:block/missing';
         resolvedTextures[key] = resolved;
     }
-    const group = new THREE.Group();
 
-    // 解析所有纹理引用 (并行加载)
-    const texturePromises = {}; // 变量名 -> Promise<THREE.Texture>
+    // 并行加载纹理
+    const texturePromises = {};
     for (const [key, ref] of Object.entries(resolvedTextures)) {
-        const texUrl = textureUrl(ref);
         const tint = getTintType(ref);
-        texturePromises[key] = loadTexture(texUrl, tint);
+        texturePromises[key] = loadTexture(packName, ref, tint);
     }
 
-    // 生成所有面
+    const group = new THREE.Group();
     for (const elem of elements) {
         const from = elem.from;
         const to = elem.to;
         const faces = elem.faces || {};
-
         for (const [faceDir, faceData] of Object.entries(faces)) {
-            const texVar = faceData.texture; // 如 "#all"
+            const texVar = faceData.texture;
             if (!texVar) continue;
             const texKey = texVar.startsWith('#') ? texVar.slice(1) : texVar;
             const texturePromise = texturePromises[texKey];
             if (!texturePromise) {
-                console.warn(`纹理变量 ${texVar} 未定义`);
+                console.warn(`纹理变量 ${texVar} 未定义，跳过该面`);
                 continue;
             }
-
-            const geom = createFaceGeometry(faceDir, from, to, faceData.uv);
+            const rotation = faceData.rotation || 0;
+            const geom = createFaceGeometry(faceDir, from, to, faceData.uv, rotation);
             if (!geom) continue;
-
+            const texture = await texturePromise;
             const material = new THREE.MeshLambertMaterial({
-                map: await texturePromise,
+                map: texture,
                 transparent: true,
                 alphaTest: 0.1,
                 side: THREE.DoubleSide,
             });
-
             const mesh = new THREE.Mesh(geom, material);
             group.add(mesh);
         }
     }
 
-    // 模型居中 (原点位于方块几何中心)
+    // 居中
     const box = new THREE.Box3().setFromObject(group);
     const center = box.getCenter(new THREE.Vector3());
     group.position.set(-center.x, -center.y, -center.z);
 
-    // 应用 display 变换 (GUI / fixed)
     const disp = (display && (display.gui || display.fixed)) || {
         rotation: [-30, -45, 0],
         translation: [0, 0, 0],
@@ -348,14 +507,12 @@ async function buildBlockScene(blockId) {
     const [rx, ry, rz] = (disp.rotation || [0, 0, 0]);
     const [tx, ty, tz] = (disp.translation || [0, 0, 0]).map(v => v / 16);
     const [sx, sy, sz] = (disp.scale || [1, 1, 1]);
-
     group.rotation.set(rx * deg, ry * deg, rz * deg, 'XYZ');
     group.scale.set(sx, sy, sz);
     group.position.x += tx;
     group.position.y += ty;
     group.position.z += tz;
 
-    // 最终居中，防止部分模型偏移导致只显示半边
     const finalBox = new THREE.Box3().setFromObject(group);
     const finalCenter = finalBox.getCenter(new THREE.Vector3());
     group.position.sub(finalCenter);
@@ -363,23 +520,29 @@ async function buildBlockScene(blockId) {
     return group;
 }
 
-// ---------- 自定义元素 <block> ----------
+// ---------- 自定义元素 <mc-block> ----------
 class BlockElement extends HTMLElement {
-    static observedAttributes = ['size'];
+    static observedAttributes = ['size', 'src'];
 
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         this._blockId = '';
+        this._packName = DEFAULT_PACK;
         this._size = '36px';
         this._renderRequested = false;
+        this._renderer = null;
+        this._scene = null;
+        this._camera = null;
+        this._observer = null;
     }
 
     connectedCallback() {
         this._blockId = (this.textContent || '').trim();
         this._size = this.getAttribute('size') || '36px';
+        this._packName = this.getAttribute('src') || DEFAULT_PACK;
         this.setupShadowDOM();
-        this.requestRender();
+        loadPack(this._packName).then(() => this.requestRender());
     }
 
     attributeChangedCallback(name, oldVal, newVal) {
@@ -387,13 +550,30 @@ class BlockElement extends HTMLElement {
             this._size = newVal;
             this.updateSize();
             this.requestRender();
+        } else if (name === 'src' && oldVal !== newVal) {
+            this._packName = newVal || DEFAULT_PACK;
+            // 清除该材质包的模型缓存，强制重新加载（因为可能换了资源）
+            // 注意：我们不清除纹理缓存，但模型缓存会根据 packName+blockId 重新生成
+            loadPack(this._packName).then(() => this.requestRender());
         }
     }
 
-    // 简单监听文本变化
-    adoptedCallback() {}
     disconnectedCallback() {
         if (this._observer) this._observer.disconnect();
+        if (this._renderer) {
+            this._renderer.dispose();
+            this._renderer = null;
+        }
+        if (this._scene) {
+            this._scene.traverse(obj => {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                    else obj.material.dispose();
+                }
+            });
+            this._scene = null;
+        }
     }
 
     setupShadowDOM() {
@@ -407,7 +587,6 @@ class BlockElement extends HTMLElement {
         this._canvas = this.shadowRoot.querySelector('canvas');
         this.updateSize();
 
-        // 监听 innerText 变化 (轻量)
         if (this._observer) this._observer.disconnect();
         this._observer = new MutationObserver(() => {
             const newId = (this.textContent || '').trim();
@@ -438,23 +617,20 @@ class BlockElement extends HTMLElement {
         this._renderRequested = false;
         if (!this._blockId) return;
 
-        // 等待尺寸生效
         const width = this.clientWidth || 36;
         const height = this.clientHeight || 36;
         if (width === 0 || height === 0) {
-            // 如果尺寸为0，稍后重试
             this._renderRequested = true;
             requestAnimationFrame(() => this.render());
             return;
         }
 
-        // 清理旧渲染器
+        // 清理旧资源
         if (this._renderer) {
             this._renderer.dispose();
             this._renderer = null;
         }
         if (this._scene) {
-            // 简单清理几何体和材质
             this._scene.traverse(obj => {
                 if (obj.geometry) obj.geometry.dispose();
                 if (obj.material) {
@@ -466,23 +642,19 @@ class BlockElement extends HTMLElement {
         }
 
         try {
-            const group = await buildBlockScene(this._blockId);
+            const group = await buildBlockScene(this._packName, this._blockId);
             if (!group) {
-                // 显示错误占位
                 this.showErrorBlock(width, height);
                 return;
             }
 
-            // 创建场景
             const scene = new THREE.Scene();
             scene.add(group);
 
-            // 光照：上方偏左前方，产生顶面最亮、左侧面中等、右侧面暗的效果
             const light = new THREE.DirectionalLight(0xffffff, 2);
             light.position.set(0.8, 1, 0.6);
             scene.add(light);
 
-            // 正交相机 (等轴测无透视)
             const frustumSize = 1.8;
             const aspect = 1;
             const camera = new THREE.OrthographicCamera(
@@ -496,7 +668,6 @@ class BlockElement extends HTMLElement {
             camera.position.set(0, 0, 2);
             camera.lookAt(0, 0, 0);
 
-            // 渲染器
             const renderer = new THREE.WebGLRenderer({
                 antialias: true,
                 alpha: true,
@@ -506,15 +677,13 @@ class BlockElement extends HTMLElement {
             renderer.setClearColor(0x000000, 0);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            // 渲染一帧
             renderer.render(scene, camera);
 
-            // 保存引用以便清理
             this._scene = scene;
             this._renderer = renderer;
             this._camera = camera;
         } catch (e) {
-            console.error(`渲染方块 ${this._blockId} 失败:`, e);
+            console.error(`渲染方块 ${this._blockId} (材质包 ${this._packName}) 失败:`, e);
             this.showErrorBlock(width, height);
         }
     }
@@ -528,12 +697,13 @@ class BlockElement extends HTMLElement {
         ctx.fillStyle = '#FF00FF';
         ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, w/2, h/2);
-        ctx.fillRect(w/2, h/2, w/2, h/2);
+        ctx.fillRect(0, 0, w / 2, h / 2);
+        ctx.fillRect(w / 2, h / 2, w / 2, h / 2);
     }
 }
 
-// 注册元素 (防重复)
-if (!customElements.get('block')) {
+if (!customElements.get('mc-block')) {
     customElements.define('mc-block', BlockElement);
 }
+
+export { loadPack, loadModel, loadTexture, DEFAULT_PACK };
