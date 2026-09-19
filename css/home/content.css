@@ -1,0 +1,461 @@
+/* ============================================================
+   css/home/content.css —— 首页内容区
+   分页（滚轮翻页）· 头像 + 社交环绕 · 图片/文字占位
+   ============================================================ */
+
+/* ---------- 滚动分页容器 ---------- */
+html.is-home {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+}
+
+/* 首页自己管入场动画：关掉全局 pageEnter。
+   body 上带 transform 会改变 fixed 元素的定位基准，影响导航栏与黑幕。 */
+body.is-home {
+    animation: none;
+}
+body.is-home.page-exit {
+    transform: none;
+}
+
+.pages {
+    position: relative;
+}
+
+.page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    scroll-snap-align: start;
+    /* 不要用 scroll-snap-stop: always —— 内容比一屏高的分页会被强制吸回顶部，
+       下半部分（比如最后一页的页脚）就永远够不着了。 */
+    display: grid;
+    place-items: center;
+    padding: calc(var(--nav-h) + 2.5rem) 1.5rem 2.5rem;
+}
+
+/* 简单过渡：进入当前分页时内容淡入上浮 */
+.page__inner {
+    width: min(1080px, 100%);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page.is-active .page__inner {
+    opacity: 1;
+    transform: none;
+}
+/* 进入动画还没结束时，不要提前露内容 */
+body.is-home.intro-running .page__inner {
+    opacity: 0 !important;
+    transform: translateY(24px) !important;
+}
+
+/* ---------- 首屏：头像 + 社交环绕 ---------- */
+.page--hero .page__inner {
+    display: grid;
+    justify-items: center;
+    gap: 1.2rem;
+}
+
+.orbit {
+    --orbit-size: min(56vmin, 470px);
+    --orbit-r: calc(var(--orbit-size) * 0.36);
+    position: relative;
+    width: var(--orbit-size);
+    height: var(--orbit-size);
+    display: grid;
+    place-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* 头像：圆形裁切 */
+.orbit__center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 33%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(140deg, rgba(0, 174, 239, 0.75), rgba(232, 64, 47, 0.55));
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+.orbit__center img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #15151f;
+    -webkit-user-drag: none;
+}
+
+/* 环绕的社交按钮 */
+.orbit__item {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    --angle: calc(var(--i, 0) * 45deg);
+    transform: translate(-50%, -50%)
+               rotate(var(--angle))
+               translateY(calc(var(--orbit-r) * -1))
+               rotate(calc(var(--angle) * -1));
+}
+
+.social {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+    backdrop-filter: blur(10px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.25s ease, border-color 0.25s ease,
+                box-shadow 0.25s ease, color 0.25s ease;
+}
+.social__icon {
+    width: 24px;
+    height: 24px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    transition: background-color 0.25s ease;
+}
+/* 图标用 CSS mask，好处是能跟着 currentColor / 品牌色一起变。
+   注意：url 必须写在这里，并且是相对【本样式表】的路径
+   （本文件在 /css/home/，所以要 ../../ 回到站点根）。
+   写成 HTML 内联的 --icon: url('images/…') 会被浏览器按引入它的样式表
+   位置解析，最终请求到 /css/home/images/… 而 404。 */
+.social__icon--github {
+    -webkit-mask-image: url('../../images/home/social/github.svg');
+    mask-image: url('../../images/home/social/github.svg');
+}
+.social__icon--bilibili {
+    -webkit-mask-image: url('../../images/home/social/bilibili.svg');
+    mask-image: url('../../images/home/social/bilibili.svg');
+}
+.social__icon--qq {
+    -webkit-mask-image: url('../../images/home/social/tencentqq.svg');
+    mask-image: url('../../images/home/social/tencentqq.svg');
+}
+.social__icon--x {
+    -webkit-mask-image: url('../../images/home/social/x.svg');
+    mask-image: url('../../images/home/social/x.svg');
+}
+.social__icon--youtube {
+    -webkit-mask-image: url('../../images/home/social/youtube.svg');
+    mask-image: url('../../images/home/social/youtube.svg');
+}
+.social__icon--steam {
+    -webkit-mask-image: url('../../images/home/social/steam.svg');
+    mask-image: url('../../images/home/social/steam.svg');
+}
+.social__icon--discord {
+    -webkit-mask-image: url('../../images/home/social/discord.svg');
+    mask-image: url('../../images/home/social/discord.svg');
+}
+.social__icon--mail {
+    -webkit-mask-image: url('../../images/home/social/mail.svg');
+    mask-image: url('../../images/home/social/mail.svg');
+}
+.social__name {
+    display: none;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 悬浮：抬起 + 品牌色描边与光晕 */
+.social:hover,
+.social:focus-visible {
+    transform: translateY(-6px) scale(1.1);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--brand, #00aeef);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand, #00aeef) 16%, transparent),
+                0 14px 28px rgba(0, 0, 0, 0.45);
+}
+.social:hover .social__icon,
+.social:focus-visible .social__icon {
+    background-color: var(--brand, #00aeef);
+}
+
+/* ---------- 首屏文字 ---------- */
+.hero__name {
+    font-size: clamp(1.6rem, 4vw, 2.3rem);
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin: 0;
+}
+.hero__tagline {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+.hero__hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    animation: hintFloat 2.6s ease-in-out infinite;
+}
+.hero__hint::after {
+    content: "";
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+}
+@keyframes hintFloat {
+    0%, 100% { transform: translateY(0); opacity: 0.75; }
+    50%      { transform: translateY(4px); opacity: 1; }
+}
+
+/* ---------- 内容分页通用排版 ---------- */
+.page__eyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--brand-blue, #00aeef);
+    margin-bottom: 0.7rem;
+}
+.page__title {
+    font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+    font-weight: 400;
+    margin: 0 0 0.7rem;
+    letter-spacing: 1px;
+}
+.page__lead {
+    margin: 0 0 1.3rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+    max-width: 60ch;
+    line-height: 1.9;
+}
+
+/* 图文两栏 */
+.work-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+/* 下方小图位 */
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.6rem;
+}
+
+/* ---------- 图片展示位 ---------- */
+.ph-media {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: 0.35rem;
+    padding: 1rem;
+    text-align: center;
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    background:
+        radial-gradient(120% 120% at 20% 0%, rgba(0, 174, 239, 0.07), transparent 60%),
+        rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.32);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow: hidden;
+    transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+.ph-media:hover {
+    border-color: rgba(0, 174, 239, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+}
+.ph-media strong {
+    display: block;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.45);
+}
+.ph-media--16x9 { aspect-ratio: 16 / 9; }
+.ph-media--4x3  { aspect-ratio: 4 / 3; }
+.ph-media--1x1  { aspect-ratio: 1 / 1; }
+
+/* 关键：图片位高度跟随视口高度收缩。
+   整页吸附（scroll-snap: mandatory）下，只要某一页比一屏高，
+   下半截就会因为被吸回页首而永远看不到 —— 所以每页都必须能一屏放下。
+   这里同时给了确定高度，aspect-ratio 会自动让位。 */
+.work-grid .ph-media { height: min(30vh, 300px); }
+.gallery .ph-media  { height: min(16vh, 150px); }
+
+/* ---------- 文字占位 ---------- */
+.ph-text {
+    border-left: 2px solid rgba(0, 174, 239, 0.35);
+    padding: 0.15rem 0 0.15rem 0.9rem;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.92rem;
+    line-height: 1.95;
+    margin: 0 0 1.1rem;
+}
+.ph-text:last-child {
+    margin-bottom: 0;
+}
+.ph-text strong {
+    color: rgba(255, 255, 255, 0.62);
+    font-weight: 500;
+}
+
+/* 标签行 */
+.tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 1.2rem;
+}
+.tag-row .mc-tag {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- 右侧分页指示点 ---------- */
+.page-dots {
+    position: fixed;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.page-dots__btn {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.25s ease,
+                border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.page-dots__btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.15);
+}
+.page-dots__btn.is-active {
+    background: var(--brand-blue, #00aeef);
+    border-color: var(--brand-blue, #00aeef);
+    box-shadow: 0 0 0 4px rgba(0, 174, 239, 0.16);
+    transform: scale(1.25);
+}
+
+/* ---------- 首页页脚（放在最后一页内，避免破坏分页吸附） ---------- */
+.home-foot {
+    margin-top: 1.8rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.28);
+    font-size: 0.78rem;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 860px) {
+    .work-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.4rem;
+    }
+    .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* 矮屏（笔记本/横屏手机）：把首屏再压一压，保证一屏放得下 */
+@media (max-height: 720px) {
+    .orbit {
+        --orbit-size: min(48vmin, 380px);
+    }
+    .page {
+        padding-top: calc(var(--nav-h) + 1.5rem);
+        padding-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .page {
+        padding: calc(var(--nav-h) + 2rem) 1.1rem 2.5rem;
+    }
+    /* 小屏不再绕圈，改成头像在上、图标成排 */
+    .orbit {
+        --orbit-size: auto;
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .orbit__center {
+        position: static;
+        transform: none;
+        width: min(46vw, 190px);
+    }
+    .orbit__item {
+        position: static;
+        transform: none;
+    }
+    .social {
+        width: auto;
+        height: auto;
+        min-width: 74px;
+        padding: 0.55rem 0.7rem;
+        border-radius: 14px;
+        gap: 0.4rem;
+    }
+    .social__icon {
+        width: 22px;
+        height: 22px;
+    }
+    .social__name {
+        display: block;
+    }
+    .page-dots {
+        right: 0.7rem;
+        gap: 0.55rem;
+    }
+    .gallery {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.is-home {
+        scroll-behavior: auto;
+    }
+    .page__inner,
+    .social,
+    .hero__hint {
+        transition: none;
+        animation: none;
+    }
+}

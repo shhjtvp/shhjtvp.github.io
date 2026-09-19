@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <!-- 
+    Logo SVG Design
+    基于用户图片还原: HJ 字母 + 不完整的圆环
+    颜色: #00AEEF (亮蓝色)
+  -->
+  <g fill="#00AEEF">
+    <!-- 外部不完整圆环 (左上角留缺口，约从1点钟方向顺时针到10点钟方向) -->
+    <path d="M 280 20 A 200 200 0 1 1 80 150" fill="none" stroke="#00AEEF" stroke-width="35" stroke-linecap="butt" />
+    
+    <!-- 字母 H 的左侧竖条 -->
+    <rect x="190" y="75" width="35" height="305" />
+    
+    <!-- 字母 H 的中间横条 (向左侧圆环外延伸，向右侧延伸出H/J的连接) -->
+    <rect x="60" y="220" width="330" height="35" />
+    
+    <!-- 字母 J 的右侧竖条 (与H共用横条，从横条底部向下) -->
+    <rect x="300" y="220" width="35" height="160" />
+    
+    <!-- 字母 J 的底部钩子 (向左延伸) -->
+    <rect x="270" y="345" width="65" height="35" />
+  </g>
+</svg>
