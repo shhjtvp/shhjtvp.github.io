@@ -23,14 +23,24 @@ body.is-home.page-exit {
 }
 
 .page {
-    min-height: 100vh;
-    min-height: 100dvh;
+    /* 固定一屏高 + 页内可滚动：
+       整页吸附下，如果某页比一屏高，多出来的部分会被吸回页首、永远看不到
+       （实测最后一页的页脚就差 77px 够不着）。固定高度后，
+       内容再多也只是在这一页内部滚动，不会变成"看不到的内容"。 */
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
     scroll-snap-align: start;
-    /* 不要用 scroll-snap-stop: always —— 内容比一屏高的分页会被强制吸回顶部，
-       下半部分（比如最后一页的页脚）就永远够不着了。 */
     display: grid;
-    place-items: center;
+    /* safe center：内容矮时垂直居中；内容超高时不会把顶部裁掉导致滚不到 */
+    align-content: center;
+    justify-items: center;
     padding: calc(var(--nav-h) + 2.5rem) 1.5rem 2.5rem;
+}
+@supports (align-content: safe center) {
+    .page {
+        align-content: safe center;
+    }
 }
 
 /* 简单过渡：进入当前分页时内容淡入上浮 */
