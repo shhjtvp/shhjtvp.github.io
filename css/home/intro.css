@@ -1,0 +1,152 @@
+/* ============================================================
+   css/home/intro.css —— 首页进入动画
+   流程：正中 logo（全页唯一可见元素）
+        → 单击 · 轻微放大
+        → 飞向左上角导航栏 logo 位置并缩放到同等大小（FLIP）
+        → 黑幕淡出：以 logo 为中心扩散的蓝环渐变为红、铺满整页后消失
+        → 同时导航栏从屏幕外下降到位
+        → 显示首页内容
+
+   图层：内容 < 光环(94/95) < 导航栏(100) < 黑幕(190)
+        光环压在内容之上、导航栏之下 —— 这样扩散时导航栏依然看得见。
+   ============================================================ */
+
+/* 首页：进入动画期间锁滚动 */
+html.intro-lock,
+body.intro-lock {
+    overflow: hidden;
+}
+
+/* ---------- 黑幕 + 居中 logo ---------- */
+.intro {
+    position: fixed;
+    inset: 0;
+    z-index: 190;
+    display: grid;
+    place-items: center;
+    background: var(--bg-dark, #000);
+    transition: opacity 0.26s ease, visibility 0.3s;
+}
+.intro.is-cleared {
+    opacity: 0;
+    pointer-events: none;
+}
+.intro.is-done {
+    display: none;
+}
+
+.intro__logo {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    width: 132px;
+    height: 132px;
+    display: grid;
+    place-items: center;
+    /* FLIP 的缩放基准放在左上角，位移+缩放可直接由 rect 差值算出 */
+    transform-origin: 0 0;
+    will-change: transform;
+    animation: introBreathe 3.4s ease-in-out infinite;
+}
+.intro__logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* 微光直接挂在 logo 上，页面里不额外出现别的元素 */
+    filter: drop-shadow(0 0 26px rgba(0, 174, 239, 0.35));
+    transition: filter 0.3s ease;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+.intro__logo:hover img {
+    filter: drop-shadow(0 0 36px rgba(0, 174, 239, 0.6));
+}
+
+@keyframes introBreathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.035); }
+}
+
+/* 单击：轻微放大 */
+.intro__logo.is-pressing {
+    animation: none;
+    transform: scale(1.08);
+    transition: transform 0.17s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* 飞向导航栏 logo（transform 由 JS 写入） */
+.intro__logo.is-flying {
+    animation: none;
+    transition: transform 0.56s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ---------- 扩散的光环 ---------- */
+/* 用 width/height 而不是 scale：scale 会把边框一起放大，
+   3px 的环放大 60 倍就变成一堵 180px 厚的墙了。 */
+.intro__ring,
+.intro__wave {
+    position: fixed;
+    left: var(--burst-x, 50vw);
+    top: var(--burst-y, 50vh);
+    width: var(--burst-size, 30px);
+    height: var(--burst-size, 30px);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 95;
+}
+
+/* 先行细环：蓝 → 红，铺满后淡出 */
+.intro__ring {
+    border: 3px solid var(--brand-blue, #00aeef);
+}
+.intro__ring.is-burst {
+    animation: introRing 1s cubic-bezier(0.22, 0.72, 0.3, 1) forwards;
+}
+@keyframes introRing {
+    0%   { width: var(--burst-size); height: var(--burst-size); opacity: 0; border-color: #00aeef; }
+    12%  { opacity: 0.95; }
+    55%  { border-color: #ff6a5e; }
+    100% { width: var(--burst-max); height: var(--burst-max); opacity: 0; border-color: #e8402f; }
+}
+
+/* 紧随其后的实心圆：把整页铺满 */
+.intro__wave {
+    z-index: 94;
+    background-color: var(--brand-blue, #00aeef);
+}
+.intro__wave.is-burst {
+    animation: introWave 1.06s cubic-bezier(0.4, 0.06, 0.3, 1) forwards;
+}
+@keyframes introWave {
+    0%   { width: var(--burst-size); height: var(--burst-size); opacity: 0; background-color: #00aeef; }
+    20%  { opacity: 0.5; }
+    60%  { background-color: #ff5a4a; }
+    100% { width: var(--burst-max); height: var(--burst-max); opacity: 0.94; background-color: #e8402f; }
+}
+/* 铺满之后淡出，露出下面的首页内容 */
+.intro__wave.is-fading {
+    animation: none;
+    width: var(--burst-max);
+    height: var(--burst-max);
+    opacity: 0;
+    visibility: hidden;
+    background-color: #e8402f;
+    transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+
+/* ---------- 无障碍：要求减少动效时一切从简 ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .intro__logo {
+        animation: none;
+    }
+    .intro__ring.is-burst,
+    .intro__wave.is-burst {
+        animation-duration: 0.01ms;
+    }
+    .intro__wave.is-fading {
+        transition-duration: 0.01ms;
+    }
+}

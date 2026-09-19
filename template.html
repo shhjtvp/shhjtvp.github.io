@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档 - ο(=•ω＜=)ρ⌒☆</title>
+    <link rel="icon" href="images/icon.ico">
     <!-- highlight.js 样式（本地优先，避免 CDN 被墙导致文档变白板） -->
     <link rel="stylesheet" href="js/vendor/atom-one-dark.min.css">
     <!-- mcfunction-highlight 样式 -->
@@ -157,16 +158,48 @@
         }
     </style>
 </head>
-<body>
+<body class="has-nav">
     <!-- ========== 全局导航栏 ========== -->
-    <nav class="global-nav">
-        <div class="nav-brand">红蘑菇hj</div>
+    <nav class="global-nav" id="globalNav">
+        <a class="nav-brand" href="index.html" aria-label="红蘑菇hj · 回到首页">
+            <img src="images/home/icon.png" alt="红蘑菇hj">
+        </a>
         <ul class="nav-links">
-            <li><a href="index.html">首页</a></li>
-            <li><a href="maps/">地图展示</a></li>
-            <li><a href="mods/">MOD 下载</a></li>
-            <li><a href="collections.html" class="active">文档</a></li>
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    MC<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link" href="maps/">地图展示</a>
+                    <a class="nav-menu__link" href="mods/">MOD 下载</a>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    软件<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button class="nav-btn is-current" type="button">
+                    作品<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link is-current" href="collections.html">站点文档</a>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
         </ul>
+        <button class="nav-fab" type="button" aria-label="展开导航栏">
+            <img src="images/home/icon.svg" alt="">
+        </button>
     </nav>
 
     <!-- ========== 页面布局：侧边栏 + 内容区 ========== -->
@@ -534,5 +567,8 @@
 
         })();
     </script>
+
+    <!-- 导航栏行为（下拉菜单 / 滚动收缩 / 页面过渡） -->
+    <script src="js/nav.js"></script>
 </body>
 </html>

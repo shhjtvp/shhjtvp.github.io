@@ -1,303 +1,325 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="is-home intro-lock">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>红蘑菇hj - 首页</title>
+    <title>红蘑菇hj</title>
+    <meta name="description" content="红蘑菇hj 的个人主页 —— 材质包 / MOD / 软件与作品">
+
+    <!-- ========== 站点图标 ========== -->
+    <link rel="icon" href="images/icon.ico">
+    <link rel="apple-touch-icon" href="images/home/icon.png">
+
+    <!-- ========== 样式 ==========
+         导航栏样式在共享的 css/style.css 里；
+         首页其余样式全部在 css/home/ 下。 -->
     <link rel="stylesheet" href="css/style.css">
-    <!-- JSZip 本地化：不再依赖 cdnjs（CDN 不可达会让所有方块退化成“材质缺失”） -->
-    <script src="js/vendor/jszip.min.js"></script>
-    <style>
-        /* ---------- 首页专用动效增强 ---------- */
+    <link rel="stylesheet" href="css/home/intro.css">
+    <link rel="stylesheet" href="css/home/content.css">
 
-        /* 首页标题入场 */
-        .hero-title {
-            opacity: 0;
-            transform: translateY(30px);
-            animation: heroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
-        }
-        .hero-sub {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: heroIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
-        }
-
-        @keyframes heroIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* 方块卡片网格 — 交错入场 */
-        .block-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2rem 3rem;
-            margin: 2rem 0 1rem;
-        }
-        .block-item {
-            opacity: 0;
-            transform: translateY(40px) scale(0.96);
-            animation: blockIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                        filter 0.3s ease,
-                        box-shadow 0.3s ease;
-            cursor: default;
-            text-align: center;
-        }
-        .block-item:hover {
-            transform: translateY(-6px) scale(1.02);
-            filter: brightness(1.08);
-        }
-        .block-item .label {
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-top: 0.3rem;
-            transition: color 0.25s;
-        }
-        .block-item:hover .label {
-            color: #fff;
-        }
-
-        /* 交错延迟 */
-        .block-item:nth-child(1) {
-            animation-delay: 0.10s;
-        }
-        .block-item:nth-child(2) {
-            animation-delay: 0.18s;
-        }
-        .block-item:nth-child(3) {
-            animation-delay: 0.26s;
-        }
-        .block-item:nth-child(4) {
-            animation-delay: 0.34s;
-        }
-        .block-item:nth-child(5) {
-            animation-delay: 0.42s;
-        }
-        .block-item:nth-child(6) {
-            animation-delay: 0.50s;
-        }
-
-        @keyframes blockIn {
-            from {
-                opacity: 0;
-                transform: translateY(40px) scale(0.96);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* 首页描述文字悬浮微动 */
-        .hero-sub {
-            display: inline-block;
-            transition: transform 0.4s ease;
-        }
-        .hero-sub:hover {
-            transform: translateX(4px);
-        }
-
-        /* 首页卡片分割线动效 */
-        .home-divider {
-            width: 60px;
-            height: 2px;
-            background: var(--accent);
-            margin: 0.6rem auto 1.8rem;
-            border-radius: 2px;
-            opacity: 0;
-            animation: dividerIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
-            transform: scaleX(0);
-            transform-origin: center;
-        }
-        @keyframes dividerIn {
-            from {
-                opacity: 0;
-                transform: scaleX(0);
-            }
-            to {
-                opacity: 1;
-                transform: scaleX(1);
-            }
-        }
-
-        /* 底部信息微动 */
-        .footer-note {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .footer-note:hover {
-            opacity: 0.8;
-            transform: translateY(-1px);
-        }
-
-        /* 响应式调整 */
-        @media (max-width: 600px) {
-            .block-grid {
-                gap: 1.5rem;
-            }
-            .block-item {
-                animation-duration: 0.5s;
-            }
-        }
-    </style>
+    <!-- 万一浏览器禁用了脚本：直接跳过进入动画，正常显示内容 -->
+    <noscript>
+        <style>
+            .intro, .intro__ring, .intro__wave { display: none !important; }
+            html.intro-lock, body.intro-lock { overflow: auto !important; }
+            body.intro-running .page__inner { opacity: 1 !important; transform: none !important; }
+            body.is-home .global-nav.nav-offstage { transform: none !important; opacity: 1 !important; }
+        </style>
+    </noscript>
 </head>
-<body>
-    <!-- ========== 全局导航栏 ========== -->
-    <nav class="global-nav">
-        <div class="nav-brand">红蘑菇hj</div>
+<body class="is-home intro-lock intro-running">
+
+    <!-- ============================================================
+         进入动画：一开始整个页面只有正中央这个 logo
+         （导航栏、内容、页脚都在它后面，点击后才依次出现）
+         ============================================================ -->
+    <div class="intro" id="intro">
+        <button class="intro__logo" id="introLogo" type="button" aria-label="进入站点">
+            <img src="images/home/icon.png" alt="">
+        </button>
+    </div>
+    <!-- 扩散光环：z-index 低于导航栏，所以导航栏下降时不会被挡住 -->
+    <span class="intro__ring" id="introRing" aria-hidden="true"></span>
+    <span class="intro__wave" id="introWave" aria-hidden="true"></span>
+
+    <!-- ============================================================
+         全局导航栏
+         初始带 nav-offstage：停在屏幕外，进入动画时再降下来
+         ============================================================ -->
+    <nav class="global-nav nav-offstage" id="globalNav">
+        <!-- 左上角：站点 logo（代替原来的“红蘑菇hj”文字） -->
+        <a class="nav-brand" href="index.html" aria-label="红蘑菇hj · 回到首页">
+            <img src="images/home/icon.png" alt="红蘑菇hj">
+        </a>
+
         <ul class="nav-links">
-            <li><a href="index.html" class="active">首页</a></li>
-            <li><a href="maps">地图展示</a></li>
-            <li><a href="mods">MOD 下载</a></li>
-            <li><a href="collections.html">文档</a></li>
+            <!-- ---------- MC ---------- -->
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    MC<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link" href="maps/">地图展示</a>
+                    <a class="nav-menu__link" href="mods/">MOD 下载</a>
+                    <!-- 占位项：换成你的二级分类 -->
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+
+            <!-- ---------- 软件 ---------- -->
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    软件<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+
+            <!-- ---------- 作品 ---------- -->
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    作品<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link" href="collections.html">站点文档</a>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
         </ul>
+
+        <!-- 收起后左上角的单按钮（图标 images/home/icon.svg） -->
+        <button class="nav-fab" type="button" aria-label="展开导航栏">
+            <img src="images/home/icon.svg" alt="">
+        </button>
     </nav>
 
-    <!-- ========== 首页主内容 ========== -->
-    <main class="main-content" style="text-align:center; padding-top:1rem;">
+    <!-- ============================================================
+         分页内容：滚轮/拖动即翻页（原生 scroll-snap，过渡干净不卡手）
+         ============================================================ -->
+    <main class="pages" id="pages">
 
-        <h1 class="hero-title" style="font-size:2.6rem; font-weight:300; letter-spacing:1px; color:var(--accent); margin-bottom:0.2rem;">
-            ⚡ 红蘑菇hj
-        </h1>
-        <div class="home-divider"></div>
-        <p class="hero-sub" style="color:#b0b0c8; font-size:1.1rem; max-width:500px; margin:0 auto 0.8rem;">
-            这些方块模型都是实时渲染的，相当于一个材质包加载器
-        </p>
+        <!-- ==================== 第 1 页：头像 + 社交环绕 ==================== -->
+        <section class="page page--hero" id="page-home" aria-label="首页">
+            <div class="page__inner">
+                <ul class="orbit">
+                    <!-- 头像：圆形裁切。替换头像就换 images/home/avatar.jpg -->
+                    <li class="orbit__center">
+                        <img src="images/home/avatar.jpg" alt="我的头像">
+                    </li>
 
-        <!-- 方块卡片网格 -->
-        <div class="block-grid">
-            <div class="block-item">
-                <mc-block size="480px">grass_block</mc-block>
-                <div class="label">草方块</div>
-            </div>
-            <div class="block-item">
-                <mc-block size="360px">diamond_block</mc-block>
-                <div class="label">钻石块</div>
-            </div>
-            <div class="block-item">
-                <mc-block size="240px">soul_campfire</mc-block>
-                <div class="label">灵魂营火 (这到底怎么修啊)</div>
-            </div>
-            <div class="block-item">
-                <mc-block size="120px">oak_leaves</mc-block>
-                <div class="label">橡树叶 (带颜色图)</div>
-            </div>
-            <div class="block-item">
-                <mc-block size="500px">dandelion</mc-block>
-                <div class="label">蒲公英 (cross 模型)</div>
-            </div>
-            <div class="block-item">
-                <mc-block size="360px">damaged_anvil</mc-block>
-                <div class="label">损坏的铁砧</div>
-            </div>
-        </div>
+                    <!-- 社交账号：把 href 换成你的主页地址即可 -->
+                    <li class="orbit__item" style="--i:0">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="GitHub"
+                           style="--brand:#ffffff">
+                            <span class="social__icon social__icon--github"></span>
+                            <span class="social__name">GitHub</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:1">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="哔哩哔哩"
+                           style="--brand:#00a1d6">
+                            <span class="social__icon social__icon--bilibili"></span>
+                            <span class="social__name">哔哩哔哩</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:2">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="QQ"
+                           style="--brand:#12b7f5">
+                            <span class="social__icon social__icon--qq"></span>
+                            <span class="social__name">QQ</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:3">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="X"
+                           style="--brand:#ffffff">
+                            <span class="social__icon social__icon--x"></span>
+                            <span class="social__name">X</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:4">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="YouTube"
+                           style="--brand:#ff0000">
+                            <span class="social__icon social__icon--youtube"></span>
+                            <span class="social__name">YouTube</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:5">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="Steam"
+                           style="--brand:#66c0f4">
+                            <span class="social__icon social__icon--steam"></span>
+                            <span class="social__name">Steam</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:6">
+                        <a class="social" href="#" target="_blank" rel="me noopener" title="Discord"
+                           style="--brand:#5865f2">
+                            <span class="social__icon social__icon--discord"></span>
+                            <span class="social__name">Discord</span>
+                        </a>
+                    </li>
+                    <li class="orbit__item" style="--i:7">
+                        <a class="social" href="#" title="邮箱" style="--brand:#00aeef">
+                            <span class="social__icon social__icon--mail"></span>
+                            <span class="social__name">邮箱</span>
+                        </a>
+                    </li>
+                </ul>
 
-        <!-- 额外小彩蛋：微动提示 -->
-        <p style="color:#555; font-size:0.75rem; margin-top:1.2rem; letter-spacing:0.5px; user-select:none; transition:color 0.3s;" 
-           onmouseenter="this.style.color='#888'" onmouseleave="this.style.color='#555'">
-            ✦ 悬停方块有轻微上浮 ✦
-        </p>
+                <!-- 名字与一句话简介（占位，自己改） -->
+                <h1 class="hero__name">红蘑菇hj</h1>
+                <p class="hero__tagline">占位 · 一句话简介</p>
+                <span class="hero__hint">向下滚动</span>
+            </div>
+        </section>
+
+        <!-- ==================== 第 2 页：自我介绍 ==================== -->
+        <section class="page" id="page-about" aria-label="自我介绍">
+            <div class="page__inner">
+                <span class="page__eyebrow">About</span>
+                <h2 class="page__title">占位标题 · 自我介绍</h2>
+                <p class="page__lead">占位 · 这里写两三句自我介绍。文字和图片都留好了位置，直接替换即可。</p>
+
+                <div class="work-grid">
+                    <div class="ph-media ph-media--4x3">
+                        <span>
+                            <strong>图片展示位</strong>
+                            建议 4:3 · 1400×1050
+                        </span>
+                    </div>
+                    <div>
+                        <p class="ph-text"><strong>文字占位 · 我是谁</strong>：这里写你的自我介绍，比如从什么时候开始玩 MC、平时在做什么。</p>
+                        <p class="ph-text"><strong>文字占位 · 在做的事</strong>：这里写在做的项目、擅长的方向，或者只是想说的话。</p>
+                        <div class="tag-row">
+                            <span class="mc-tag">占位标签</span>
+                            <span class="mc-tag">占位标签</span>
+                            <span class="mc-tag">占位标签</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 第 3 页：材质包 ==================== -->
+        <section class="page" id="page-pack" aria-label="材质包">
+            <div class="page__inner">
+                <span class="page__eyebrow">Texture Pack</span>
+                <h2 class="page__title">占位标题 · 材质包</h2>
+                <p class="page__lead">占位 · 这里介绍你做的材质包：风格、分辨率、适配版本与下载方式。</p>
+
+                <div class="work-grid">
+                    <div class="ph-media ph-media--16x9">
+                        <span>
+                            <strong>主图展示位</strong>
+                            建议 16:9 · 1600×900
+                        </span>
+                    </div>
+                    <div>
+                        <p class="ph-text"><strong>介绍占位</strong>：材质包的名字、风格定位、包含多少方块。</p>
+                        <p class="ph-text"><strong>信息占位</strong>：适用版本 / 分辨率 / 文件大小 / 下载链接。</p>
+                        <div class="tag-row">
+                            <span class="mc-tag">占位标签</span>
+                            <span class="mc-tag">占位标签</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gallery">
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>1</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>2</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>3</span></div>
+                </div>
+
+                <!-- 想在这里直接放实时渲染的方块？页面底部取消注释引入脚本，
+                     然后把下面这行换成：<mc-block size="220px">grass_block</mc-block> -->
+            </div>
+        </section>
+
+        <!-- ==================== 第 4 页：MOD ==================== -->
+        <section class="page" id="page-mod" aria-label="MOD">
+            <div class="page__inner">
+                <span class="page__eyebrow">Mod</span>
+                <h2 class="page__title">占位标题 · MOD</h2>
+                <p class="page__lead">占位 · 这里介绍你写的 MOD：玩法、依赖、支持的加载器与 MC 版本。</p>
+
+                <div class="work-grid">
+                    <div class="ph-media ph-media--16x9">
+                        <span>
+                            <strong>主图展示位</strong>
+                            建议 16:9 · 1600×900
+                        </span>
+                    </div>
+                    <div>
+                        <p class="ph-text"><strong>介绍占位</strong>：MOD 名字、核心玩法、为什么做它。</p>
+                        <p class="ph-text"><strong>信息占位</strong>：Fabric / Forge / NeoForge、前置依赖、下载地址。</p>
+                        <div class="tag-row">
+                            <span class="mc-tag">占位标签</span>
+                            <span class="mc-tag">占位标签</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gallery">
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>1</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>2</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>3</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 第 5 页：软件 ==================== -->
+        <section class="page" id="page-soft" aria-label="软件">
+            <div class="page__inner">
+                <span class="page__eyebrow">Software</span>
+                <h2 class="page__title">占位标题 · 软件</h2>
+                <p class="page__lead">占位 · 这里介绍你写的软件/工具：解决什么问题、怎么用、在哪里下载。</p>
+
+                <div class="work-grid">
+                    <div class="ph-media ph-media--16x9">
+                        <span>
+                            <strong>主图展示位</strong>
+                            建议 16:9 · 1600×900
+                        </span>
+                    </div>
+                    <div>
+                        <p class="ph-text"><strong>介绍占位</strong>：软件名字、用途、特色功能。</p>
+                        <p class="ph-text"><strong>信息占位</strong>：支持平台 / 运行环境 / 开源地址 / 下载地址。</p>
+                        <div class="tag-row">
+                            <span class="mc-tag">占位标签</span>
+                            <span class="mc-tag">占位标签</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gallery">
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>1</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>2</span></div>
+                    <div class="ph-media ph-media--4x3"><span><strong>预览图</strong>3</span></div>
+                </div>
+
+                <!-- 放在最后一页里，避免破坏整页吸附 -->
+                <p class="home-foot">© 2026 红蘑菇hj · 基于 GitHub Pages 构建</p>
+            </div>
+        </section>
 
     </main>
 
-    <!-- ========== 全局页脚 ========== -->
-    <footer class="global-footer">
-        <p class="footer-note">© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 使用 marked.js / highlight.js / Giscus</p>
-    </footer>
+    <!-- 右侧分页指示点（由 js/home.js 生成） -->
+    <nav class="page-dots" id="pageDots" aria-label="分页导航"></nav>
 
-    <!-- ========== 依赖脚本 ========== -->
-    <script type="module" src="js/minecraft.js"></script>
-
-    <!-- ========== 页面切换过渡（所有页面共用） ========== -->
-    <script>
-        (function() {
-            'use strict';
-
-            // ---- 页面入场 ----
-            // body 已在 style.css 中定义了 pageEnter 动画，此处无需额外操作
-
-            // ---- 页面出场：拦截内部链接，触发淡出再跳转 ----
-            const EXIT_DELAY = 350; // ms，与 CSS 动画时长匹配
-
-            function isInternalLink(href) {
-                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return false;
-                // 相对路径或同源绝对路径
-                const a = document.createElement('a');
-                a.href = href;
-                // 如果 host 为空（相对路径）或与当前 host 相同，视为内部链接
-                return !a.host || a.host === window.location.host;
-            }
-
-            function handleLinkClick(e) {
-                const target = e.currentTarget;
-                const href = target.getAttribute('href');
-                if (!isInternalLink(href)) return;
-
-                e.preventDefault();
-
-                // 如果已经处于退出状态，不重复触发
-                if (document.body.classList.contains('page-exit')) return;
-
-                // 触发退出动画
-                document.body.classList.add('page-exit');
-
-                // 延迟后跳转
-                setTimeout(() => {
-                    window.location.href = href;
-                }, EXIT_DELAY);
-            }
-
-            // 绑定所有内部链接（包括动态生成的链接，使用事件委托）
-            document.addEventListener('click', function(e) {
-                const link = e.target.closest('a[href]');
-                if (!link) return;
-                // 只处理内部链接
-                const href = link.getAttribute('href');
-                if (!isInternalLink(href)) return;
-                // 如果链接有 target="_blank" 或 rel="external"，不拦截
-                if (link.target === '_blank' || link.getAttribute('rel') === 'external') return;
-                // 如果已经处于退出状态，不重复触发
-                if (document.body.classList.contains('page-exit')) return;
-
-                e.preventDefault();
-
-                // 触发退出动画
-                document.body.classList.add('page-exit');
-
-                setTimeout(() => {
-                    window.location.href = href;
-                }, EXIT_DELAY);
-            });
-
-            // ---- 如果用户使用浏览器的前进/后退，移除退出状态 ----
-            window.addEventListener('pageshow', function(e) {
-                document.body.classList.remove('page-exit');
-                // 重新触发入场动画：移除再添加
-                document.body.style.animation = 'none';
-                // 强制回流
-                void document.body.offsetHeight;
-                document.body.style.animation = '';
-            });
-
-            // ---- 对于通过 JS 动态跳转的情况（如 template.html 中的导航），提供一个辅助函数 ----
-            window.__navigateTo = function(url) {
-                if (document.body.classList.contains('page-exit')) return;
-                document.body.classList.add('page-exit');
-                setTimeout(() => {
-                    window.location.href = url;
-                }, EXIT_DELAY);
-            };
-
-            console.log('✨ 页面切换过渡已启用 (红蘑菇hj)');
-        })();
-    </script>
+    <!-- ============================================================
+         脚本
+         想在首页显示实时渲染的方块，再取消下面两行注释，
+         并在上面任一 ph-media 位置放 <mc-block size="220px">grass_block</mc-block>
+         ============================================================ -->
+    <!-- <script src="js/vendor/jszip.min.js"></script> -->
+    <!-- <script type="module" src="js/minecraft.js"></script> -->
+    <script src="js/nav.js"></script>
+    <script src="js/home.js"></script>
 
 </body>
 </html>
