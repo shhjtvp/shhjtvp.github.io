@@ -406,127 +406,6 @@ body.has-nav {
     color: #aaa;
 }
 
-/* ---------- 文档布局（模板页） ---------- */
-.doc-layout {
-    display: flex;
-    max-width: var(--max-width);
-    width: 100%;
-    margin: 0 auto;
-    flex: 1;
-    min-height: 0;
-}
-.doc-sidebar {
-    width: 240px;
-    flex-shrink: 0;
-    background: #16162a;
-    border-right: 2px solid var(--border-color);
-    padding: 1.2rem;
-    overflow-y: auto;
-    position: sticky;
-    top: var(--nav-height);
-    height: calc(100vh - var(--nav-height));
-}
-.doc-sidebar h3 {
-    color: var(--accent);
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-}
-.sidebar-category {
-    color: #777;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin: 1rem 0 0.3rem;
-    padding-left: 0.3rem;
-}
-.sidebar-link {
-    display: block;
-    color: var(--text-muted);
-    text-decoration: none;
-    padding: 0.35rem 0.5rem;
-    border-radius: 3px;
-    font-size: 0.88rem;
-    transition: background 0.15s, color 0.15s;
-}
-.sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-}
-.sidebar-link.active {
-    background: rgba(78, 203, 113, 0.2);
-    color: var(--accent);
-    font-weight: 600;
-}
-.doc-content {
-    flex: 1;
-    padding: 2rem 2.5rem;
-    min-width: 0;
-    overflow-y: auto;
-}
-
-/* ---------- 文档内容样式 ---------- */
-.doc-content h1 {
-    font-size: 2rem;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-.doc-content h2 {
-    font-size: 1.4rem;
-    margin-top: 2rem;
-    color: var(--accent);
-}
-.doc-content h3 {
-    font-size: 1.15rem;
-    margin-top: 1.5rem;
-}
-.doc-content p {
-    margin: 0.8rem 0;
-}
-.doc-content code {
-    background: #2a2a40;
-    padding: 0.15rem 0.4rem;
-    border-radius: 3px;
-    font-family: "Fira Code", "Consolas", monospace;
-    font-size: 0.9em;
-}
-.doc-content pre {
-    background: #0d0d1a;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 1rem 1.2rem;
-    overflow-x: auto;
-    margin: 1rem 0;
-}
-.doc-content pre code {
-    background: none;
-    padding: 0;
-}
-.doc-content table {
-    border-collapse: collapse;
-    margin: 1rem 0;
-    width: 100%;
-}
-.doc-content th,
-.doc-content td {
-    border: 1px solid var(--border-color);
-    padding: 0.5rem 0.8rem;
-    text-align: left;
-}
-.doc-content th {
-    background: #2a2a40;
-}
-.doc-content blockquote {
-    border-left: 4px solid var(--accent);
-    padding: 0.5rem 1rem;
-    margin: 1rem 0;
-    background: rgba(78, 203, 113, 0.08);
-    border-radius: 0 4px 4px 0;
-}
-.doc-content a {
-    color: var(--accent);
-}
-
 /* ---------- Modrinth 输入行 ---------- */
 .modrinth-input-row {
     display: flex;
@@ -549,27 +428,6 @@ body.has-nav {
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 768px) {
-    .doc-layout {
-        flex-direction: column;
-    }
-    .doc-sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        top: 0;
-        border-right: none;
-        border-bottom: 2px solid var(--border-color);
-    }
-    .doc-content {
-        padding: 1.2rem;
-    }
-    .nav-links {
-        gap: 0;
-    }
-    .nav-links a {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.82rem;
-    }
     .mc-crafting-grid {
         grid-template-columns: repeat(3, 44px);
         grid-template-rows: repeat(3, 44px);
@@ -593,73 +451,6 @@ body.has-nav {
   -ms-interpolation-mode: nearest-neighbor;
 }
 
-
-/* ---------- 脚注样式 ---------- */
-.footnote-ref {
-    font-size: 0.7em;
-    vertical-align: super;
-    cursor: help;
-    color: #cb4e4e;
-    font-weight: 600;
-    transition: color 0.2s;
-    user-select: none;
-}
-.footnote-ref:hover {
-    color: #ff7a7a;
-}
-
-.footnotes {
-    margin-top: 2.5rem;
-    padding-top: 1.2rem;
-    border-top: 2px solid #3a3a5a;
-}
-.footnotes h3 {
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: #aaa;
-    margin-bottom: 0.8rem;
-}
-.footnotes ol {
-    padding-left: 1.8rem;
-    color: #c0c0d0;
-    font-size: 0.95rem;
-}
-.footnotes li {
-    margin-bottom: 0.6rem;
-    line-height: 1.5;
-}
-.footnotes li:target {
-    background: rgba(203, 78, 78, 0.15);
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-}
-
-/* 悬浮提示框（tooltip） */
-.footnote-tooltip {
-    position: fixed;
-    max-width: 320px;
-    background: #321e1e;
-    border: 1px solid #6a4a4a;
-    border-radius: 4px;
-    padding: 10px 14px;
-    color: #e8e8f0;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    z-index: 9999;
-    pointer-events: none;          /* 防止干扰鼠标事件 */
-    backdrop-filter: blur(4px);
-    transition: opacity 0.15s;
-}
-.footnote-tooltip p {
-    margin: 0.2rem 0;
-}
-.footnote-tooltip code {
-    background: #2a2a44;
-    padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.85em;
-}
 
 /* ============================================================
    页面切换过渡
@@ -816,5 +607,61 @@ body.page-exit {
 @media (max-width: 600px) {
     .mc-crafting {
         margin-right: 5.5rem;
+    }
+}
+
+/* ============================================================
+   光标光晕（js/cursor.js）
+   平时淡淡的蓝光跟着光标；按住时交叉淡入红色。
+   两层都是径向渐变，靠透明度互相切换 —— 渐变本身不能做 transition。
+   ============================================================ */
+.cursor-glow {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 340px;
+    height: 340px;
+    pointer-events: none;
+    z-index: 500;               /* 盖在页面与进入动画之上，但仍不挡点击 */
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    will-change: transform;
+}
+.cursor-glow.is-visible {
+    opacity: 1;
+}
+.cursor-glow__blue,
+.cursor-glow__red {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    transition: opacity 0.3s ease;
+}
+.cursor-glow__blue {
+    opacity: 1;
+    background: radial-gradient(circle,
+        rgba(0, 174, 239, 0.15) 0%,
+        rgba(0, 174, 239, 0.07) 36%,
+        rgba(0, 174, 239, 0) 70%);
+}
+.cursor-glow__red {
+    opacity: 0;
+    background: radial-gradient(circle,
+        rgba(232, 64, 47, 0.22) 0%,
+        rgba(232, 64, 47, 0.10) 36%,
+        rgba(232, 64, 47, 0) 72%);
+}
+.cursor-glow.is-pressed .cursor-glow__blue {
+    opacity: 0;
+}
+.cursor-glow.is-pressed .cursor-glow__red {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cursor-glow,
+    .cursor-glow__blue,
+    .cursor-glow__red {
+        transition: none;
     }
 }

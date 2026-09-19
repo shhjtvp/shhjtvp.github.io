@@ -11,152 +11,12 @@
     <link rel="stylesheet" href="js/vendor/mcfunction-highlight.min.css">
     <!-- 全局样式（与站点一致） -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- 文档页布局与 Markdown 排版 -->
+    <link rel="stylesheet" href="css/docs.css">
     <!-- 文档页专用补充样式（树形菜单、导航按钮等） -->
     <script src="js/vendor/jszip.min.js"></script>
     <!-- 必须是 module：minecraft.js 内部用 import 加载 three.js，当成普通脚本会直接语法报错 -->
     <script type="module" src="js/minecraft.js"></script>
-    <style>
-        /* ---------- 树形侧边栏样式 ---------- */
-        .tree-root {
-            padding-left: 0;
-            list-style: none;
-            margin: 0;
-        }
-        .tree-root ul {
-            padding-left: 1.5rem;
-            list-style: none;
-        }
-        .tree-node {
-            margin: 0.2rem 0;
-        }
-        /* 文件夹节点：可点击的标题 */
-        .tree-folder > span {
-            cursor: pointer;
-            user-select: none;
-            display: inline-block;
-            padding: 0.2rem 0;
-            color: #b0b0c0;
-            transition: color 0.2s;
-        }
-        .tree-folder > span:hover {
-            color: #fff;
-        }
-        /* 文件夹图标：展开状态用 📂，折叠状态用 📁 */
-        .tree-folder > span::before {
-            content: "◆⌟  ";
-            transition: transform 0.2s;
-        }
-        .tree-folder.collapsed > span::before {
-            content: "◇⌝  ";
-        }
-        .tree-folder.collapsed > ul {
-            display: none;
-        }
-        /* 文档链接（与 style.css 中的 .sidebar-link 保持一致） */
-        .sidebar-link {
-            display: block;
-            padding: 0.2rem 0.5rem;
-            margin: 0.1rem 0;
-            border-radius: 4px;
-            text-decoration: none;
-            color: var(--text-muted, #99999960);
-            transition: background 0.2s, color 0.2s;
-            font-size: 0.88rem;
-        }
-        .sidebar-link:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-        }
-        .sidebar-link.active {
-            background: rgba(203, 78, 78, 0.2);
-            color: var(--accent, #cb4e4e);
-            font-weight: 600;
-        }
-
-        /* ====== Markdown 表格样式定制 ====== */
-        .doc-content table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1.2rem 0;
-            font-size: 0.95rem;
-        }
-
-        .doc-content th,
-        .doc-content td {
-            border: 2px solid #8a6a6a50;
-            padding: 0.6rem 0.8rem;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .doc-content th {
-            background-color: #5a3a3a80;
-            color: #f0f0f0;
-            font-weight: 600;
-        }
-
-        .doc-content tr:nth-child(even) {
-            background-color: #3a1e1e0e;
-        }
-        .doc-content tr:nth-child(odd) {
-            background-color: #4022220e;
-        }
-
-        .doc-content th {
-            border-bottom: 3px solid #aa8a8a;
-        }
-
-        /* ---------- 文档内容中的导航按钮（上一章/下一章） ---------- */
-        .doc-nav {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color, #5a3a3a);
-        }
-        .doc-nav a {
-            display: inline-block;
-            padding: 0.4rem 1.2rem;
-            background: var(--bg-panel, #222240);
-            color: var(--text-primary, #e0e0e0);
-            text-decoration: none;
-            border-radius: 6px;
-            transition: background 0.2s, transform 0.1s;
-            border: 1px solid var(--border-color, #5a3a3a);
-        }
-        .doc-nav a:hover:not(.disabled) {
-            background: var(--accent, #222240);
-            color: #000;
-        }
-        .doc-nav a:active:not(.disabled) {
-            transform: scale(0.96);
-        }
-        .doc-nav .disabled {
-            opacity: 0.3;
-            pointer-events: none;
-            cursor: default;
-        }
-
-        /* ---------- 响应式兼容 ---------- */
-        @media (max-width: 768px) {
-            .doc-sidebar {
-                height: auto !important;
-                position: relative !important;
-                top: 0 !important;
-            }
-            .doc-content {
-                padding: 1.2rem !important;
-            }
-            .doc-nav {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            .doc-nav a {
-                flex: 1;
-                text-align: center;
-            }
-        }
-    </style>
 </head>
 <body class="has-nav">
     <!-- ========== 全局导航栏 ========== -->
@@ -187,8 +47,19 @@
                 </div>
             </li>
             <li class="nav-item">
-                <button class="nav-btn is-current" type="button">
+                <button class="nav-btn" type="button">
                     作品<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <!-- 当前页属于「文档」，所以这个按钮带 is-current 高亮 -->
+            <li class="nav-item">
+                <button class="nav-btn is-current" type="button">
+                    文档<i class="nav-caret" aria-hidden="true"></i>
                 </button>
                 <div class="nav-menu">
                     <a class="nav-menu__link is-current" href="collections.html">站点文档</a>
@@ -568,6 +439,8 @@
         })();
     </script>
 
+    <!-- 光标光晕 -->
+    <script src="js/cursor.js"></script>
     <!-- 导航栏行为（下拉菜单 / 滚动收缩 / 页面过渡） -->
     <script src="js/nav.js"></script>
 </body>
