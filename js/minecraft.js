@@ -99,6 +99,20 @@ const DEFAULT_PACK = 'mini-26.2';
 const FALLBACK_PACK = '26.2-Fabric 0.19.3';
 const PACK_MAX_ATTEMPTS = 3;   // zip 下载/解析失败时的重试次数
 
+// 剪影贴图的二值裁剪阈值（MC 本身就是二值 alpha）
+const ALPHA_TEST = 0.5;
+
+// ---------- 光照 ----------
+// three r155 之后是物理光照单位，Lambert 出射亮度 ≈ 入射辐照度/π，
+// 所以「想要的亮度」要乘 π 才是 intensity。
+// 老代码只有一个平行光、没有环境光：背光面直接是纯黑，
+// 实测整块方块有 35%~42% 的像素亮度接近 0（中位亮度只有 0.11）。
+// 现在：环境光托底 + 主光给方向感 + 补光抬一点背光面，
+// 六个面的亮度大致落在 0.55 ~ 0.94，既不发黑也保留体积感。
+const LIGHT_AMBIENT = 0.55 * Math.PI;
+const LIGHT_KEY = 0.36 * Math.PI;
+const LIGHT_FILL = 0.18 * Math.PI;
+
 // ---------- 材质包缓存 ----------
 const packCache = new Map(); // 键: packName, 值: { zipFile, loaded, promise }
 
@@ -302,22 +316,90 @@ function loadImage(src) {
     });
 }
 
-function getTintType(texturePath) {
-    const lower = texturePath.toLowerCase();
-    if ((lower.includes('grass_block') && !lower.includes('snow')) ||
-        lower.includes('grass_block_top') || lower.includes('grass_block_side')) {
-        return 'grass';
+// 染色只看模型里的 tintindex（MC 就是这么定的），不再按纹理路径猜。
+// 老代码用路径猜，grass_block_side 因为路径里含 "grass_block" 被整张染绿，
+// 结果连属性是泥土的那半张也被染绿了。
+function pickTintType(blockId, textureRef) {
+    const s = `${blockId} ${textureRef}`.toLowerCase();
+    if (s.includes('leaves') || s.includes('leaf')) return 'foliage';
+    return 'grass';
+}
+
+// ---------- 动画纹理 ----------
+// MC 的动画纹理是「竖着摞起来的长条」（例：16x128 = 8 帧），
+// 同目录配一个 <纹理名>.png.mcmeta 描述帧间隔。
+// 这里用 texture.repeat/offset 每次只采样其中一帧，靠 rAF 推进 offset ——
+// 不需要重新上传纹理，开销可以忽略。
+const ANIMATION_EPOCH = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+// texture -> 动画描述。用 Map 而不是 Set，方便元素重建/卸载时精确移除自己那几张贴图，
+// 否则每次重新渲染都会克隆出新纹理、注册表只增不减（尺寸变化时会慢慢涨）。
+const animatedTextures = new Map();
+
+function registerAnimatedTexture(texture, anim) {
+    if (!texture || !anim) return;
+    animatedTextures.set(texture, {
+        frameCount: anim.frameCount,
+        frames: anim.frames,
+        frameTimeMs: anim.frameTimeMs,
+    });
+}
+
+function unregisterAnimatedTexture(texture) {
+    if (texture) animatedTextures.delete(texture);
+}
+
+// 按『绝对时间』算当前帧并写入 offset，所以重复调用是幂等的，
+// 多个方块共用同一条纹理时也自动保持同步。
+function tickAnimatedTextures(now) {
+    const t = (typeof now === 'number' ? now : performance.now()) - ANIMATION_EPOCH;
+    animatedTextures.forEach((entry, texture) => {
+        const step = Math.floor(t / entry.frameTimeMs) % entry.frames.length;
+        const offset = entry.frames[step] / entry.frameCount;
+        if (texture.offset.y !== offset) texture.offset.y = offset;
+    });
+}
+
+// 读 <纹理>.png.mcmeta。没有就返回 null，不抛错、不影响主流程。
+async function loadAnimationMeta(packName, textureRef) {
+    let path = textureRef;
+    if (path.startsWith('minecraft:')) path = path.slice(10);
+    const zipPath = `assets/minecraft/textures/${path}.png.mcmeta`;
+    try {
+        const cache = getPackCache(packName);
+        let text = null;
+        if (cache.loaded && cache.zipFile) {
+            try {
+                text = await readFromPack(packName, zipPath, 'string');
+            } catch (e) {
+                text = null;
+            }
+        }
+        if (text === null) {
+            // 只有材质包没走 ZIP 时才回退 HTTP。
+            // ZIP 已加载却找不到文件 = 这张纹理本来就没有 mcmeta，
+            // 再发一次 HTTP 只会白刷 404。
+            if (cache.loaded && cache.zipFile) return null;
+            const resp = await fetch(`${getAssetsRoot(packName)}/textures/${encodeURI(path)}.png.mcmeta`);
+            if (!resp.ok) return null;
+            text = await resp.text();
+        }
+        const anim = JSON.parse(text).animation;
+        if (!anim) return null;
+        const frames = Array.isArray(anim.frames)
+            ? anim.frames.map((f) => (typeof f === 'number' ? f : f && f.index)).filter((n) => Number.isInteger(n))
+            : null;
+        return {
+            frameTimeTicks: Number.isFinite(anim.frametime) ? Math.max(1, anim.frametime) : 1,
+            frames: frames && frames.length ? frames : null,
+            interpolate: !!anim.interpolate,
+        };
+    } catch (e) {
+        return null;
     }
-    if (lower.includes('leaves') || lower.includes('leaf')) {
-        return 'foliage';
-    }
-    if (lower.includes('tall_grass') || lower.includes('fern') || lower.includes('vine')) {
-        return 'grass';
-    }
-    return null;
 }
 
 // ---------- 纹理加载 ----------
+// 返回 { texture, anim }：anim 非空表示这是动画纹理，需要开渲染循环推进。
 async function loadTexture(packName, textureRef, tintType = null) {
     let path = textureRef;
     if (path.startsWith('minecraft:')) path = path.slice(10);
@@ -325,8 +407,13 @@ async function loadTexture(packName, textureRef, tintType = null) {
     const cacheKey = `${packName}|${zipPath}|tint:${tintType || 'none'}`;
 
     if (textureCache.has(cacheKey)) {
-        const tex = await textureCache.get(cacheKey);
-        return tex.clone();
+        const cached = await textureCache.get(cacheKey);
+        if (!cached || !cached.texture) {
+            return { texture: ERROR_TEXTURE ? ERROR_TEXTURE.clone() : null, anim: null };
+        }
+        const clone = cached.texture.clone();
+        // clone 有独立的 offset，注册交给调用方（这样元素重建时能精确反注册）
+        return { texture: clone, anim: cached.anim };
     }
 
     const promise = (async () => {
@@ -340,63 +427,115 @@ async function loadTexture(packName, textureRef, tintType = null) {
                     blobUrl = URL.createObjectURL(blob);
                     img = await loadImage(blobUrl);
                 } catch (zipErr) {
-                    console.warn(`ZIP读取纹理失败 ${zipPath}，回退HTTP`, zipErr);
-                    const url = getTextureUrl(packName, textureRef);
-                    img = await loadImage(url);
+                    console.warn(`ZIP 读取纹理失败 ${zipPath}，回退 HTTP`, zipErr);
+                    img = await loadImage(getTextureUrl(packName, textureRef));
                 }
             } else {
-                const url = getTextureUrl(packName, textureRef);
-                img = await loadImage(url);
+                img = await loadImage(getTextureUrl(packName, textureRef));
             }
 
-            // ===== 新增：裁剪为 16x16 =====
-            let imgSource = img;
-            if (img.width !== 16 || img.height !== 16) {
+            // 动画判定：长条高度是宽度的整数倍即为多帧（mcmeta 只负责帧间隔与帧序）
+            const meta = await loadAnimationMeta(packName, textureRef);
+            const frameCount = (img.height > img.width && img.height % img.width === 0)
+                ? img.height / img.width
+                : 1;
+            let anim = null;
+            if (frameCount > 1) {
+                const all = Array.from({ length: frameCount }, (_, i) => i);
+                const frames = ((meta && meta.frames) ? meta.frames : all).filter((i) => i >= 0 && i < frameCount);
+                anim = {
+                    frameCount,
+                    frames: frames.length ? frames : all,
+                    frameTimeMs: Math.max(20, ((meta && meta.frameTimeTicks) || 1) * 50),
+                };
+                if (meta && meta.interpolate) {
+                    console.info(`[mc-block] ${textureRef}: mcmeta 要求帧间插值，已展开成 8 倍帧率播放`);
+                }
+            }
+
+            // 这里【不再】把纹理裁成 16x16。
+            // 老代码无条件取左上角 16x16：动画长条只剩第一帧（永远不动），
+            // 非 16x16 的纹理还会被裁错区域导致贴图错位。
+            let baseImage = img;
+
+            // mcmeta 里 interpolate:true 表示相邻帧之间要平滑过渡。
+            // 单张纹理没法同时采样两帧，所以加载时就把 N 帧插值放大成 N*STEPS 帧，
+            // 再按帧播放，视觉上接近 MC 的效果。（篝火的 soul_campfire_log_lit 就是这种）
+            if (anim && meta && meta.interpolate) {
+                const steps = 8;
+                const fh = img.width;                    // MC 约定：长条每帧高度 = 宽度
+                const frameCanvas = document.createElement('canvas');
+                frameCanvas.width = img.width;
+                frameCanvas.height = fh;
+                const fctx = frameCanvas.getContext('2d');
+                const strip = document.createElement('canvas');
+                strip.width = img.width;
+                strip.height = fh * anim.frames.length * steps;
+                const sctx = strip.getContext('2d');
+                let outIndex = 0;
+                for (let i = 0; i < anim.frames.length; i++) {
+                    const cur = anim.frames[i];
+                    const next = anim.frames[(i + 1) % anim.frames.length];
+                    for (let s = 0; s < steps; s++) {
+                        const t = s / steps;
+                        fctx.clearRect(0, 0, img.width, fh);
+                        fctx.globalAlpha = 1;
+                        fctx.drawImage(img, 0, cur * fh, img.width, fh, 0, 0, img.width, fh);
+                        fctx.globalAlpha = t;
+                        fctx.drawImage(img, 0, next * fh, img.width, fh, 0, 0, img.width, fh);
+                        fctx.globalAlpha = 1;
+                        sctx.putImageData(fctx.getImageData(0, 0, img.width, fh), 0, outIndex * fh);
+                        outIndex++;
+                    }
+                }
+                baseImage = strip;
+                anim = {
+                    frameCount: outIndex,
+                    frames: Array.from({ length: outIndex }, (_, i) => i),
+                    frameTimeMs: Math.max(16, anim.frameTimeMs / steps),
+                };
+            }
+
+            let source = baseImage;
+            if (tintType) {
+                const tint = await loadColormap(packName, tintType);
                 const canvas = document.createElement('canvas');
-                canvas.width = 16;
-                canvas.height = 16;
+                canvas.width = baseImage.width;
+                canvas.height = baseImage.height;
                 const ctx = canvas.getContext('2d');
-                // 取左上角 16x16 区域
-                ctx.drawImage(img, 0, 0, 16, 16, 0, 0, 16, 16);
-                imgSource = canvas;
-                // 注意：如果后续有颜色图处理，使用 imgSource 作为图像源
+                ctx.drawImage(baseImage, 0, 0);
+                const imageData = ctx.getImageData(0, 0, baseImage.width, baseImage.height);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = Math.min(255, data[i] * tint.r);
+                    data[i + 1] = Math.min(255, data[i + 1] * tint.g);
+                    data[i + 2] = Math.min(255, data[i + 2] * tint.b);
+                }
+                ctx.putImageData(imageData, 0, 0);
+                source = canvas;
             }
 
-            // 如果不需要染色，直接使用 imgSource
-            if (!tintType) {
-                const texture = new THREE.CanvasTexture(imgSource);
-                texture.magFilter = THREE.NearestFilter;
-                texture.minFilter = THREE.NearestFilter;
-                texture.colorSpace = THREE.SRGBColorSpace;
-                if (blobUrl) URL.revokeObjectURL(blobUrl);
-                return texture;
-            }
-
-            // 染色逻辑：使用 imgSource（已裁剪）
-            const tint = await loadColormap(packName, tintType);
-            const canvas = document.createElement('canvas');
-            canvas.width = 16;
-            canvas.height = 16;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(imgSource, 0, 0, 16, 16);  // 直接绘制 16x16 图像
-            const imageData = ctx.getImageData(0, 0, 16, 16);
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                data[i] = Math.min(255, data[i] * tint.r);
-                data[i + 1] = Math.min(255, data[i + 1] * tint.g);
-                data[i + 2] = Math.min(255, data[i + 2] * tint.b);
-            }
-            ctx.putImageData(imageData, 0, 0);
-            const texture = new THREE.CanvasTexture(canvas);
+            const texture = new THREE.CanvasTexture(source);
+            // MC 的纹理 v 轴从上往下，而 three 默认 flipY=true 会在上传时把图上下翻转。
+            // 两边各翻一次才对得上，很容易写成翻两次或都不翻 —— 那正是「贴图上下镜像」
+            // 这类错位的来源。这里直接对齐 MC：flipY=false，UV 用 MC 原值。
+            texture.flipY = false;
             texture.magFilter = THREE.NearestFilter;
             texture.minFilter = THREE.NearestFilter;
+            texture.generateMipmaps = false;
             texture.colorSpace = THREE.SRGBColorSpace;
+            if (anim) {
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+                texture.repeat.set(1, 1 / anim.frameCount);   // 只采样长条里的一帧
+                texture.offset.set(0, 0);
+            }
             if (blobUrl) URL.revokeObjectURL(blobUrl);
-            return texture;
+            return { texture, anim };
         } catch (err) {
             console.warn(`纹理加载失败: ${textureRef} (材质包 ${packName})，使用错误纹理`, err);
             if (blobUrl) URL.revokeObjectURL(blobUrl);
-            return ERROR_TEXTURE ? ERROR_TEXTURE.clone() : null;
+            return { texture: ERROR_TEXTURE ? ERROR_TEXTURE.clone() : null, anim: null };
         }
     })();
 
@@ -477,81 +616,118 @@ async function loadModel(packName, blockId) {
 }
 
 // ---------- 几何体生成 ----------
-function createFaceGeometry(faceDir, from, to, uv, rotation) {
-    const min = new THREE.Vector3().fromArray(from).multiplyScalar(1 / 16);
-    const max = new THREE.Vector3().fromArray(to).multiplyScalar(1 / 16);
-    let vertices;
-    switch (faceDir) {
-        case 'up':
-            vertices = [
-                [min.x, max.y, max.z], [max.x, max.y, max.z],
-                [max.x, max.y, min.z], [min.x, max.y, min.z]
-            ]; break;
-        case 'down':
-            vertices = [
-                [min.x, min.y, min.z], [max.x, min.y, min.z],
-                [max.x, min.y, max.z], [min.x, min.y, max.z]
-            ]; break;
-        case 'north':
-            vertices = [
-                [min.x, min.y, min.z], [max.x, min.y, min.z],
-                [max.x, max.y, min.z], [min.x, max.y, min.z]
-            ]; break;
-        case 'south':
-            vertices = [
-                [min.x, min.y, max.z], [max.x, min.y, max.z],
-                [max.x, max.y, max.z], [min.x, max.y, max.z]
-            ]; break;
-        case 'west':
-            vertices = [
-                [min.x, min.y, min.z], [min.x, min.y, max.z],
-                [min.x, max.y, max.z], [min.x, max.y, min.z]
-            ]; break;
-        case 'east':
-            vertices = [
-                [max.x, min.y, min.z], [max.x, min.y, max.z],
-                [max.x, max.y, max.z], [max.x, max.y, min.z]
-            ]; break;
-        default: return null;
+// 每个面：从方块外侧看过去，按「左上 → 右上 → 右下 → 左下」给出四个角。
+//
+// 推导方式（MC 的约定就是「从外侧看纹理不正像」）：
+//   站在该面正前方看向方块，屏幕向右 = u 增大方向，屏幕向下 = v 增大方向。
+// 例：north 面是站在北侧往南看，此时观察者的右手方向是世界 -x，所以 u 对应 -x；
+//     south 面是站在南侧往北看，右手方向是 +x，所以 u 对应 +x。
+// 六个面这样推下来满足同一条不变量：u × v = -外法线（自洽性检查）。
+// 之前 north/south/west/east 的 u 方向写反了，表现就是这几个面的纹理左右镜像，
+// 也就是「贴图错位」。
+const FACE_CORNERS = {
+    // u→+x, v→+z
+    up:    (x1, y1, z1, x2, y2, z2) => [[x1, y2, z1], [x2, y2, z1], [x2, y2, z2], [x1, y2, z2]],
+    // u→+x, v→-z
+    down:  (x1, y1, z1, x2, y2, z2) => [[x1, y1, z2], [x2, y1, z2], [x2, y1, z1], [x1, y1, z1]],
+    // u→-x, v→-y
+    north: (x1, y1, z1, x2, y2, z2) => [[x2, y2, z1], [x1, y2, z1], [x1, y1, z1], [x2, y1, z1]],
+    // u→+x, v→-y
+    south: (x1, y1, z1, x2, y2, z2) => [[x1, y2, z2], [x2, y2, z2], [x2, y1, z2], [x1, y1, z2]],
+    // u→+z, v→-y
+    west:  (x1, y1, z1, x2, y2, z2) => [[x1, y2, z1], [x1, y2, z2], [x1, y1, z2], [x1, y1, z1]],
+    // u→-z, v→-y
+    east:  (x1, y1, z1, x2, y2, z2) => [[x2, y2, z2], [x2, y2, z1], [x2, y1, z1], [x2, y1, z2]],
+};
+
+// 模型没写 uv 时，MC 用「元素在该面两个方向上的尺寸」当 UV 矩形
+function autoUV(faceDir, from, to) {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const dz = to[2] - from[2];
+    if (faceDir === 'up' || faceDir === 'down') return [0, 0, dx, dz];
+    const u = (faceDir === 'east' || faceDir === 'west') ? dz : dx;
+    return [0, 0, u, dy];
+}
+
+// elements[].rotation —— 老代码完全没实现。
+// 灵魂篝火的火焰和蒲公英（cross 模型）都靠它把平面绕 Y 转 45°，
+// 缺了它「X 形」会变成「十字形」，看着就是模型错位。
+function elementMatrix(elem) {
+    const r = elem && elem.rotation;
+    if (!r) return null;
+    const angleDeg = Number(r.angle || 0);
+    if (!angleDeg) return null;
+    const axis = String(r.axis || 'y').toLowerCase();
+    const origin = Array.isArray(r.origin) ? r.origin : [8, 8, 8];
+    const ox = origin[0] / 16;
+    const oy = origin[1] / 16;
+    const oz = origin[2] / 16;
+    const rad = angleDeg * deg;
+
+    const axisVec = axis === 'x' ? new THREE.Vector3(1, 0, 0)
+        : axis === 'z' ? new THREE.Vector3(0, 0, 1)
+            : new THREE.Vector3(0, 1, 0);
+
+    // 顺序：移到原点 → 缩放(rescale) → 旋转 → 移回
+    const m = new THREE.Matrix4()
+        .makeTranslation(ox, oy, oz)
+        .multiply(new THREE.Matrix4().makeRotationAxis(axisVec, rad));
+
+    if (r.rescale) {
+        // MC 的 rescale：把垂直于旋转轴的两个方向按 1/max(|cos|,|sin|) 拉长，
+        // 45° 时正好 √2，于是平面从一个角对角跨到另一个角（十字变 X 就是靠这个）
+        const c = Math.abs(Math.cos(rad));
+        const s = Math.abs(Math.sin(rad));
+        const k = 1 / Math.max(c, s, 1e-6);
+        m.multiply(new THREE.Matrix4().makeScale(
+            axis === 'x' ? 1 : k,
+            axis === 'y' ? 1 : k,
+            axis === 'z' ? 1 : k
+        ));
     }
 
-    // ---- 处理 UV 旋转 ----
-    if (!uv) uv = [0, 0, 16, 16];
-    let [u1, v1, u2, v2] = uv;
-    // 归一化到 0-1
-    u1 /= 16; v1 /= 16; u2 /= 16; v2 /= 16;
-    // 四个角点：顺序与 vertices 对应
-    let uvPoints = [
-        [u1, v1], // 顶点0
-        [u2, v1], // 顶点1
-        [u2, v2], // 顶点2
-        [u1, v2]  // 顶点3
+    m.multiply(new THREE.Matrix4().makeTranslation(-ox, -oy, -oz));
+    return m;
+}
+
+function createFaceGeometry(faceDir, from, to, uv, rotation) {
+    const cornersOf = FACE_CORNERS[faceDir];
+    if (!cornersOf) return null;
+    if (!Array.isArray(from) || !Array.isArray(to) || from.length < 3 || to.length < 3) return null;
+
+    const pos = cornersOf(
+        from[0] / 16, from[1] / 16, from[2] / 16,
+        to[0] / 16, to[1] / 16, to[2] / 16
+    ).flat();
+
+    // UV 矩形：MC 记法是 [左上u, 左上v, 右下u, 右下v]，
+    // u1>u2 / v1>v2 表示该面纹理是镜像的，这里直接用原值即可。
+    const rect = (Array.isArray(uv) && uv.length >= 4) ? uv : autoUV(faceDir, from, to);
+    const cornerUV = [
+        [rect[0] / 16, rect[1] / 16],   // 纹理左上
+        [rect[2] / 16, rect[1] / 16],   // 纹理右上
+        [rect[2] / 16, rect[3] / 16],   // 纹理右下
+        [rect[0] / 16, rect[3] / 16],   // 纹理左下
     ];
 
-    // 如果有旋转，应用旋转（围绕中心 0.5,0.5）
-    if (rotation && rotation !== 0) {
-        const angle = rotation * Math.PI / 180;
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        uvPoints = uvPoints.map(([u, v]) => {
-            const du = u - 0.5;
-            const dv = v - 0.5;
-            return [
-                0.5 + du * cos - dv * sin,
-                0.5 + du * sin + dv * cos
-            ];
-        });
+    // faces[].rotation：把纹理在该面的 UV 矩形【内】顺时针转 0/90/180/270。
+    // 老代码是绕整张纹理中心 (0.5,0.5) 旋转，那个做法和 MC 完全不是一回事，
+    // 也是篝火/铁砧这类大量用 rotation 的模型贴图错位的主因。
+    // 顺时针 90° 等价于「面的左上角取纹理左下角」，即角点整体错一位。
+    const rot = (((Number(rotation) || 0) % 360) + 360) % 360;
+    const shift = rot === 90 ? 1 : rot === 180 ? 2 : rot === 270 ? 3 : 0;
+    const uvs = [];
+    for (let i = 0; i < 4; i++) {
+        const c = cornerUV[(i - shift + 4) % 4];
+        uvs.push(c[0], c[1]);
     }
 
-    // 展平为数组
-    const uvs = uvPoints.flat();
-
-    // 构建几何体
     const geom = new THREE.BufferGeometry();
-    const pos = [];
-    vertices.forEach(v => pos.push(...v));
     geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geom.setIndex([0, 1, 2, 0, 2, 3]);
+    // 反向缠绕，使法线朝方块外侧（材质是 DoubleSide，可见性不受影响，
+    // 但法线朝外时光照才是对的）
+    geom.setIndex([0, 2, 1, 0, 3, 2]);
     geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geom.computeVertexNormals();
     return geom;
@@ -600,39 +776,65 @@ async function buildBlockScene(packName, blockId) {
         resolvedTextures[key] = resolved;
     }
 
-    // 并行加载纹理
-    const texturePromises = {};
-    for (const [key, ref] of Object.entries(resolvedTextures)) {
-        const tint = getTintType(ref);
-        texturePromises[key] = loadTexture(packName, ref, tint);
+    // 纹理按 (纹理引用 + 染色) 维度懒加载并复用；
+    // 染色不再预先按变量算，而是逐面看 tintindex 决定。
+    const texByRef = new Map();
+    function getFaceTexture(ref, tintType) {
+        const key = `${ref}|${tintType || 'none'}`;
+        if (!texByRef.has(key)) texByRef.set(key, loadTexture(packName, ref, tintType));
+        return texByRef.get(key);
     }
 
+    let animated = false;
+    const animatedUsed = new Set();   // 本次构建用到的动画纹理，交给元素负责反注册
     const group = new THREE.Group();
+
     for (const elem of elements) {
-        const from = elem.from;
-        const to = elem.to;
-        const faces = elem.faces || {};
+        const from = elem && elem.from;
+        const to = elem && elem.to;
+        if (!Array.isArray(from) || !Array.isArray(to)) continue;
+        const faces = (elem && elem.faces) || {};
+        // 元素级旋转（篝火火焰、蒲公英的 45° 平面都靠它）
+        const elemMatrix = elementMatrix(elem);
+        // shade:false —— 该元素不受方向光照影响（火焰、植物），MC 里就是全亮
+        const unlit = elem.shade === false;
+
         for (const [faceDir, faceData] of Object.entries(faces)) {
-            const texVar = faceData.texture;
+            const texVar = faceData && faceData.texture;
             if (!texVar) continue;
             const texKey = texVar.startsWith('#') ? texVar.slice(1) : texVar;
-            const texturePromise = texturePromises[texKey];
-            if (!texturePromise) {
+            const ref = resolvedTextures[texKey];
+            if (!ref) {
                 console.warn(`纹理变量 ${texVar} 未定义，跳过该面`);
                 continue;
             }
-            const rotation = faceData.rotation || 0;
-            const geom = createFaceGeometry(faceDir, from, to, faceData.uv, rotation);
+
+            const geom = createFaceGeometry(faceDir, from, to, faceData.uv, faceData.rotation);
             if (!geom) continue;
-            const texture = await texturePromise;
-            const material = new THREE.MeshLambertMaterial({
-                map: texture,
-                transparent: true,
-                alphaTest: 0.1,
+            if (elemMatrix) geom.applyMatrix4(elemMatrix);
+
+            // tintindex 才是 MC 决定「这一面要不要染色」的依据
+            const tintType = (faceData.tintindex === undefined) ? null : pickTintType(blockId, ref);
+            const loaded = await getFaceTexture(ref, tintType);
+            if (loaded.anim && loaded.texture) {
+                animated = true;
+                registerAnimatedTexture(loaded.texture, loaded.anim);
+                animatedUsed.add(loaded.texture);
+            }
+
+            const params = {
+                map: loaded.texture,
+                // 剪影类贴图（树叶、植物、草方块覆盖层）用 alphaTest 做二值裁剪，
+                // 比 transparent:true 正确得多：transparent 会走混合排序，
+                // 容易出现半透明边和深度写入问题，画面发暗也是它引起的。
+                transparent: false,
+                alphaTest: ALPHA_TEST,
                 side: THREE.DoubleSide,
-            });
-            const mesh = new THREE.Mesh(geom, material);
-            group.add(mesh);
+            };
+            const material = unlit
+                ? new THREE.MeshBasicMaterial(params)      // 全亮，不参与光照
+                : new THREE.MeshLambertMaterial(params);
+            group.add(new THREE.Mesh(geom, material));
         }
     }
 
@@ -659,7 +861,9 @@ async function buildBlockScene(packName, blockId) {
     const finalCenter = finalBox.getCenter(new THREE.Vector3());
     group.position.sub(finalCenter);
 
-    return group;
+    // animated=true 表示这个方块用了动画纹理，调用方需要开渲染循环推进帧；
+    // animatedTextures 是本次构建注册的那些纹理实例，元素卸载/重建时要反注册。
+    return { group, animated, animatedTextures: [...animatedUsed] };
 }
 
 // ---------- 自定义元素 <mc-block> ----------
@@ -677,6 +881,11 @@ class BlockElement extends HTMLElement {
         this._scene = null;
         this._camera = null;
         this._observer = null;
+        this._rafId = null;       // 动画纹理的渲染循环
+        this._io = null;          // 离屏暂停用的 IntersectionObserver
+        this._paused = false;
+        this._animationPending = false;
+        this._animTextures = [];  // 本元素注册过的动画纹理实例
     }
 
     connectedCallback() {
@@ -701,6 +910,12 @@ class BlockElement extends HTMLElement {
     }
 
     disconnectedCallback() {
+        this._stopAnimation();
+        this._releaseAnimatedTextures();
+        if (this._io) {
+            this._io.disconnect();
+            this._io = null;
+        }
         if (this._observer) this._observer.disconnect();
         if (this._renderer) {
             this._renderer.dispose();
@@ -716,6 +931,40 @@ class BlockElement extends HTMLElement {
             });
             this._scene = null;
         }
+    }
+
+    // ---------- 动画纹理的渲染循环 ----------
+    // 只有真的用到动画纹理的方块才会开；离屏 / 标签页隐藏时自动暂停。
+    _startAnimation() {
+        if (this._rafId !== null) return;
+        const step = () => {
+            this._rafId = requestAnimationFrame(step);
+            if (this._paused || document.hidden) return;
+            tickAnimatedTextures(performance.now());
+            if (this._renderer && this._scene && this._camera) {
+                this._renderer.render(this._scene, this._camera);
+            }
+        };
+        this._rafId = requestAnimationFrame(step);
+
+        if (!this._io && typeof IntersectionObserver !== 'undefined') {
+            this._io = new IntersectionObserver((entries) => {
+                this._paused = !(entries[0] && entries[0].isIntersecting);
+            }, { threshold: 0 });
+            this._io.observe(this);
+        }
+    }
+
+    _stopAnimation() {
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+    }
+
+    _releaseAnimatedTextures() {
+        (this._animTextures || []).forEach(unregisterAnimatedTexture);
+        this._animTextures = [];
     }
 
     setupShadowDOM() {
@@ -777,6 +1026,8 @@ class BlockElement extends HTMLElement {
         }
 
         // 清理旧资源
+        this._stopAnimation();
+        this._releaseAnimatedTextures();
         if (this._renderer) {
             this._renderer.dispose();
             this._renderer = null;
@@ -793,21 +1044,30 @@ class BlockElement extends HTMLElement {
         }
 
         try {
-            const group = await buildBlockScene(this._packName, this._blockId);
-            if (!group) {
+            const built = await buildBlockScene(this._packName, this._blockId);
+            if (!built || !built.group) {
                 const packErr = getPackCache(this._packName).lastError;
                 this.showErrorBlock(width, height, packErr
                     ? `材质包 "${this._packName}" 加载失败：${packErr}`
                     : `模型 "${this._blockId}" 缺少 elements（材质包 "${this._packName}"）`);
                 return;
             }
+            const { group, animated } = built;
+            this._animTextures = built.animatedTextures || [];
 
             const scene = new THREE.Scene();
             scene.add(group);
 
-            const light = new THREE.DirectionalLight(0xffffff, 2);
-            light.position.set(0.8, 1, 0.6);
-            scene.add(light);
+            // 环境光托底，避免背光面纯黑；主光给体积感，补光抬一点背光面
+            scene.add(new THREE.AmbientLight(0xffffff, LIGHT_AMBIENT));
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, LIGHT_KEY);
+            keyLight.position.set(0.52, 1, 0.42);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, LIGHT_FILL);
+            fillLight.position.set(-0.6, 0.5, -0.7);
+            scene.add(fillLight);
 
             const frustumSize = 1.8;
             const aspect = 1;
@@ -837,8 +1097,16 @@ class BlockElement extends HTMLElement {
             this._renderer = renderer;
             this._camera = camera;
 
+            // 用了动画纹理就开渲染循环推进帧；否则保持一次性快照（省电）
+            if (animated) {
+                tickAnimatedTextures(performance.now());
+                this._startAnimation();
+            }
+
             // 成功标记：便于页面/自动化检查，也方便线上排障
             this.dataset.rendered = 'true';
+            if (animated) this.dataset.animated = 'true';
+            else delete this.dataset.animated;
             delete this.dataset.error;
             this.title = '';
         } catch (e) {
@@ -876,6 +1144,11 @@ window.__mcBlockDiag = () => ({
                  : `加载失败：${threeLoadError ? threeLoadError.message : '未知'}`,
     jszip: window.JSZip ? '已加载' : '未加载（会走 CDN 兜底）',
     zipBasePath: ZIP_BASE_PATH,
+    animatedTextures: [...animatedTextures.entries()].map(([texture, info]) => ({
+        frames: info.frameCount,
+        frameTimeMs: info.frameTimeMs,
+        currentOffsetY: +texture.offset.y.toFixed(4),
+    })),
     packs: [...packCache.entries()].map(([name, c]) => ({
         name,
         loaded: c.loaded,
@@ -884,4 +1157,5 @@ window.__mcBlockDiag = () => ({
     })),
 });
 
-export { loadPack, loadModel, loadTexture, DEFAULT_PACK };
+// 内部函数也导出，方便自动化测试直接断言几何 / UV / 旋转是否正确
+export { loadPack, loadModel, loadTexture, createFaceGeometry, elementMatrix, tickAnimatedTextures, DEFAULT_PACK };

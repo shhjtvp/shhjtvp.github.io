@@ -1,0 +1,438 @@
+/* ============================================================
+   css/docs.css —— 文档页布局 + Markdown 排版
+   只有 template.html 会加载它。风格与首页对齐：
+   深色底 + 毛玻璃面板 + #00aeef 蓝为主色、红色只作点缀。
+   ============================================================ */
+
+/* ---------- 页面底噪：两团极淡的光，让毛玻璃有东西可以「透」 ---------- */
+.doc-layout {
+    position: relative;
+    display: flex;
+    max-width: var(--max-width);
+    width: 100%;
+    margin: 0 auto;
+    flex: 1;
+    min-height: 0;
+}
+.doc-layout::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(46rem 30rem at 8% -6%, rgba(0, 174, 239, 0.10), transparent 60%),
+        radial-gradient(40rem 28rem at 100% 108%, rgba(232, 64, 47, 0.07), transparent 62%);
+}
+
+/* ---------- 侧边栏（毛玻璃） ---------- */
+.doc-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    padding: 1.2rem 1.1rem;
+    overflow-y: auto;
+    position: sticky;
+    top: var(--nav-height);
+    height: calc(100vh - var(--nav-height));
+    background: rgba(255, 255, 255, 0.025);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+.doc-sidebar h3 {
+    color: var(--brand-blue, #00aeef);
+    margin-bottom: 0.9rem;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* ---------- 侧边栏目录树 ---------- */
+.tree-root {
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+.tree-root ul {
+    padding-left: 1.15rem;
+    list-style: none;
+}
+.tree-node {
+    margin: 0.15rem 0;
+}
+.tree-folder > span {
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+    padding: 0.24rem 0;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.86rem;
+    transition: color 0.2s ease;
+}
+.tree-folder > span:hover {
+    color: #fff;
+}
+/* 文件夹图标：展开 / 折叠 */
+.tree-folder > span::before {
+    content: "◆⌟  ";
+    color: var(--brand-blue, #00aeef);
+    opacity: 0.75;
+}
+.tree-folder.collapsed > span::before {
+    content: "◇⌝  ";
+    opacity: 0.5;
+}
+.tree-folder.collapsed > ul {
+    display: none;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 0.3rem 0.55rem;
+    margin: 0.1rem 0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.86rem;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+.sidebar-link.active {
+    background: rgba(0, 174, 239, 0.12);
+    border-color: rgba(0, 174, 239, 0.35);
+    color: #fff;
+    font-weight: 500;
+}
+
+/* ---------- 正文容器 ---------- */
+.doc-content {
+    flex: 1;
+    padding: 2.2rem 2.6rem 4rem;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   Markdown 排版
+   ============================================================ */
+.doc-content h1 {
+    font-size: clamp(1.7rem, 3.4vw, 2.1rem);
+    font-weight: 300;
+    letter-spacing: 1px;
+    padding-bottom: 0.6rem;
+    margin: 0 0 1.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, 0.75) 60%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.doc-content h2 {
+    font-size: 1.35rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin: 2.4rem 0 1rem;
+    padding-left: 0.7rem;
+    border-left: 3px solid var(--brand-blue, #00aeef);
+    color: #fff;
+}
+.doc-content h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 1.9rem 0 0.8rem;
+    color: rgba(255, 255, 255, 0.92);
+}
+.doc-content h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 1.5rem 0 0.6rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+.doc-content p {
+    margin: 0.85rem 0;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.95;
+}
+.doc-content strong {
+    color: #fff;
+    font-weight: 600;
+}
+.doc-content em {
+    color: rgba(255, 255, 255, 0.85);
+}
+.doc-content a {
+    color: var(--brand-blue, #00aeef);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 174, 239, 0.35);
+    transition: color 0.2s ease, border-color 0.2s ease, text-shadow 0.2s ease;
+}
+.doc-content a:hover {
+    color: #6fd2ff;
+    border-bottom-color: rgba(111, 210, 255, 0.8);
+    text-shadow: 0 0 14px rgba(0, 174, 239, 0.45);
+}
+.doc-content hr {
+    border: 0;
+    height: 1px;
+    margin: 2.2rem 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+}
+.doc-content img {
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.doc-content ul,
+.doc-content ol {
+    padding-left: 1.5rem;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.9;
+}
+.doc-content li {
+    margin: 0.3rem 0;
+}
+.doc-content li::marker {
+    color: var(--brand-blue, #00aeef);
+}
+.doc-content li > ul,
+.doc-content li > ol {
+    margin: 0.3rem 0;
+}
+
+/* 行内代码：玻璃小胶囊 */
+.doc-content code {
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.88em;
+    padding: 0.14rem 0.42rem;
+    border-radius: 6px;
+    background: rgba(0, 174, 239, 0.10);
+    border: 1px solid rgba(0, 174, 239, 0.18);
+    color: #9fe3ff;
+}
+
+/* 代码块：毛玻璃面板（highlight.js 的主题色保留在内部） */
+.doc-content pre {
+    margin: 1.1rem 0;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.035);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.35);
+    overflow-x: auto;
+}
+.doc-content pre code {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: 0.86rem;
+    line-height: 1.75;
+}
+
+/* 引用 / 注释框：毛玻璃，左侧一道蓝色高光 */
+.doc-content blockquote {
+    position: relative;
+    margin: 1.4rem 0;
+    padding: 1rem 1.2rem 1rem 1.35rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.045);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 14px 36px rgba(0, 0, 0, 0.38);
+    overflow: hidden;
+}
+.doc-content blockquote::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--brand-blue, #00aeef), rgba(232, 64, 47, 0.75));
+}
+.doc-content blockquote p {
+    margin: 0.35rem 0;
+    color: rgba(255, 255, 255, 0.72);
+}
+.doc-content blockquote p:first-child {
+    margin-top: 0;
+}
+.doc-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* 表格：毛玻璃 + 蓝色表头 */
+.doc-content table {
+    width: 100%;
+    margin: 1.4rem 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.025);
+}
+.doc-content th,
+.doc-content td {
+    padding: 0.65rem 0.85rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.doc-content th {
+    background: rgba(0, 174, 239, 0.10);
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.doc-content tbody tr:last-child td {
+    border-bottom: 0;
+}
+.doc-content tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- 上一章 / 下一章（毛玻璃按钮） ---------- */
+.doc-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-top: 2.8rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.doc-nav a {
+    display: inline-block;
+    padding: 0.5rem 1.2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease, color 0.2s ease,
+                border-color 0.2s ease, transform 0.15s ease;
+}
+.doc-nav a:hover:not(.disabled) {
+    background: rgba(0, 174, 239, 0.14);
+    border-color: rgba(0, 174, 239, 0.45);
+    color: #fff;
+}
+.doc-nav a:active:not(.disabled) {
+    transform: scale(0.97);
+}
+.doc-nav .disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    cursor: default;
+}
+
+/* ---------- 脚注 ---------- */
+.footnote-ref {
+    font-size: 0.7em;
+    vertical-align: super;
+    cursor: help;
+    color: var(--brand-blue, #00aeef);
+    font-weight: 600;
+    transition: color 0.2s ease;
+    user-select: none;
+}
+.footnote-ref:hover {
+    color: #6fd2ff;
+}
+.footnotes {
+    margin-top: 2.6rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.footnotes h3 {
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.8rem;
+}
+.footnotes ol {
+    padding-left: 1.6rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+.footnotes li {
+    margin-bottom: 0.6rem;
+}
+.footnotes li:target {
+    background: rgba(0, 174, 239, 0.12);
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+}
+.footnote-tooltip {
+    position: fixed;
+    max-width: 320px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.88rem;
+    line-height: 1.65;
+    background: rgba(22, 22, 36, 0.72);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    pointer-events: none;
+}
+.footnote-tooltip p {
+    margin: 0.2rem 0;
+}
+.footnote-tooltip code {
+    background: rgba(0, 174, 239, 0.12);
+    padding: 0.1rem 0.4rem;
+    border-radius: 6px;
+    font-size: 0.85em;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 860px) {
+    .doc-layout {
+        flex-direction: column;
+    }
+    .doc-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .doc-content {
+        padding: 1.4rem 1.2rem 3rem;
+    }
+    .doc-nav {
+        flex-wrap: wrap;
+    }
+    .doc-nav a {
+        flex: 1;
+        text-align: center;
+    }
+    /* 窄屏下表格允许横向滚动，别把页面撑破 */
+    .doc-content table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .doc-content table th,
+    .doc-content table td {
+        white-space: normal;
+    }
+}

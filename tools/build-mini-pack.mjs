@@ -133,6 +133,20 @@ for (const cm of ['grass', 'foliage']) {
     else missing.push(`颜色图缺失: ${p}`);
 }
 
+// 动画纹理的 <纹理>.png.mcmeta（帧间隔与帧序）必须一起带上，
+// 否则渲染器只能用默认 1 tick 猜，动起来的节奏会和游戏里不一致。
+const animated = [];
+for (const p of [...wanted].filter((f) => f.endsWith('.png'))) {
+    const metaPath = `${p}.mcmeta`;
+    if (srcZip.file(metaPath)) {
+        wanted.add(metaPath);
+        animated.push(p.split('/').pop());
+    }
+}
+if (animated.length) {
+    console.log(`   动画纹理 ${animated.length} 张：${animated.join('、')}`);
+}
+
 if (missing.length) {
     console.error('❌ 解析完整包时发现问题，未生成精简包：');
     for (const m of missing) console.error('   - ' + m);

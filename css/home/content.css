@@ -43,21 +43,44 @@ body.is-home.page-exit {
     }
 }
 
-/* 简单过渡：进入当前分页时内容淡入上浮 */
+/* 分页内容过渡。进入动画结束后红环是「一边扩散一边淡出」的，
+   内容用更长、更缓的曲线同时浮现，两者交叠，避免红环一消失内容就整块跳出来。 */
 .page__inner {
     width: min(1080px, 100%);
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateY(22px) scale(0.99);
+    transition: opacity 1s cubic-bezier(0.33, 0, 0.2, 1),
+                transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .page.is-active .page__inner {
     opacity: 1;
     transform: none;
 }
-/* 进入动画还没结束时，不要提前露内容 */
+
+/* 首屏再细一层：头像环绕 → 名字 → 简介 → 提示 依次浮现 */
+.page--hero .page__inner > * {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.9s cubic-bezier(0.33, 0, 0.2, 1),
+                transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page--hero.is-active .page__inner > * {
+    opacity: 1;
+    transform: none;
+}
+.page--hero.is-active .page__inner > *:nth-child(2) { transition-delay: 0.12s; }
+.page--hero.is-active .page__inner > *:nth-child(3) { transition-delay: 0.2s; }
+.page--hero.is-active .page__inner > *:nth-child(4) { transition-delay: 0.28s; }
+
+/* 进入动画还没结束：父层与子层一起按住，解锁后才会按上面的延迟依次浮现 */
 body.is-home.intro-running .page__inner {
     opacity: 0 !important;
-    transform: translateY(24px) !important;
+    transform: translateY(22px) scale(0.99) !important;
+}
+body.is-home.intro-running .page--hero .page__inner > * {
+    opacity: 0 !important;
+    transform: translateY(14px) !important;
+    transition-delay: 0s !important;
 }
 
 /* ---------- 首屏：头像 + 社交环绕 ---------- */
@@ -67,9 +90,21 @@ body.is-home.intro-running .page__inner {
     gap: 1.2rem;
 }
 
+/* 社交环绕缓慢自转。
+   做法：@property 把 --orbit-spin 注册成可动画的 <angle>，在 .orbit 上循环播放；
+   子项用 calc() 把自转角度叠加进自身的定位旋转，末尾再来一次反向旋转把图标转正，
+   所以整圈在转、图标始终竖直。
+   不支持 @property 的浏览器只是不转，布局与可点击性不受影响。 */
+@property --orbit-spin {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: true;
+}
+
 .orbit {
     --orbit-size: min(56vmin, 470px);
     --orbit-r: calc(var(--orbit-size) * 0.36);
+    --orbit-spin: 0deg;
     position: relative;
     width: var(--orbit-size);
     height: var(--orbit-size);
@@ -78,6 +113,22 @@ body.is-home.intro-running .page__inner {
     list-style: none;
     margin: 0;
     padding: 0;
+    animation: orbitSpin 90s linear infinite;
+}
+
+/* 分四段：@property 生效时是连续插值；万一浏览器不支持注册属性，
+   自定义属性只能离散跳变，分四段也就是每 22.5 秒挪 90°，不会一次跳半圈。 */
+@keyframes orbitSpin {
+    0%   { --orbit-spin: 0deg; }
+    25%  { --orbit-spin: 90deg; }
+    50%  { --orbit-spin: 180deg; }
+    75%  { --orbit-spin: 270deg; }
+    100% { --orbit-spin: 360deg; }
+}
+
+/* 指针进入就暂停自转：不然图标一直在跑，很难点中 */
+.orbit:hover {
+    animation-play-state: paused;
 }
 
 /* 头像：圆形裁切 */
@@ -108,11 +159,12 @@ body.is-home.intro-running .page__inner {
     position: absolute;
     left: 50%;
     top: 50%;
-    --angle: calc(var(--i, 0) * 45deg);
+    /* 自身序号角度 + 整圈自转角度；末尾的 -angle 让图标回到竖直 */
+    --angle: calc(var(--i, 0) * 45deg + var(--orbit-spin, 0deg));
     transform: translate(-50%, -50%)
                rotate(var(--angle))
                translateY(calc(var(--orbit-r) * -1))
-               rotate(calc(var(--angle) * -1));
+               rotate(calc(-1 * var(--angle)));
 }
 
 .social {
@@ -231,8 +283,11 @@ body.is-home.intro-running .page__inner {
     transform: rotate(45deg) translateY(-2px);
 }
 @keyframes hintFloat {
-    0%, 100% { transform: translateY(0); opacity: 0.75; }
-    50%      { transform: translateY(4px); opacity: 1; }
+    /* 只动 transform 与 filter：opacity 要留给「元素依次浮现」的过渡，
+       否则这个无限循环的动画会把 opacity 一直顶掉，
+       提示会比其它元素提前跳出来（实测过）。 */
+    0%, 100% { transform: translateY(0); filter: opacity(0.75); }
+    50%      { transform: translateY(4px); filter: opacity(1); }
 }
 
 /* ---------- 内容分页通用排版 ---------- */
@@ -462,7 +517,11 @@ body.is-home.intro-running .page__inner {
     html.is-home {
         scroll-behavior: auto;
     }
+    .orbit {
+        animation: none;
+    }
     .page__inner,
+    .page--hero .page__inner > *,
     .social,
     .hero__hint {
         transition: none;

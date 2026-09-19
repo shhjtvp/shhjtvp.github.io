@@ -72,9 +72,12 @@
         press: 170,
         fly: 560,
         burstDelay: 150,
-        content: 900,
-        fadeWave: 1150,
-        cleanup: 1750,
+        // 红环铺满后开始淡出；内容同时开始浮现，两者交叠才显得平滑
+        // （淡出时长在 css/home/intro.css 的 .intro__wave.is-fading 里，1.1s）
+        fadeWave: 980,
+        content: 1000,
+        // 等红环淡出 + 内容入场都走完再收尾
+        cleanup: 2500,
     };
 
     let started = false;
