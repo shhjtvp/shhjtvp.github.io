@@ -1,16 +1,103 @@
 // js/minecraft.js
 // 支持多材质包：<mc-block src="packname"> 加载 mc_textures/packname.zip
-// 默认材质包：26.2-Fabric 0.19.3
+// 默认材质包：mini-26.2（精简包，仅含站点用到的资源，约 31 KB）
+// 兜底材质包：26.2-Fabric 0.19.3（完整包，精简包里没收录的方块会自动到这里取）
 // 保留 HTTP 回退，模型加载失败时自动尝试 item/ 路径
+//
+// ============ 2026-08 修复说明：为什么线上所有方块都变成“材质缺失” ============
+// 原因链：
+//   1) JSZip 只从 cdnjs 这一个 CDN 引入。该 CDN 一旦不可达，window.JSZip 为 undefined；
+//   2) ZIP 分支整体抛错 → packCache.loaded = false；
+//   3) 代码于是走 HTTP 回退，去请求 /mc_textures/<包名>/assets/minecraft/... ——
+//      但仓库里只有 .zip，没有解包目录，该路径必然 404；
+//   4) 模型拿不到 elements → buildBlockScene 返回 null → 画紫黑棋盘格（“材质缺失”）。
+// 现在改为：three.js / JSZip 一律【本地优先】(js/vendor/)，本地缺失才回退 CDN 链，
+// 并且路径基准改用 import.meta.url 推导，不再写死根路径。
 
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+// ---------- 路径基准（不写死 '/mc_textures/'，兼容子路径部署） ----------
+const SITE_JS_DIR = new URL('./', import.meta.url);
+const ZIP_BASE_PATH = new URL('../mc_textures/', SITE_JS_DIR).href;
 
-// ---------- 全局依赖 ----------
-const JSZip = window.JSZip;
+// ---------- three.js：本地优先 + CDN 兜底 ----------
+const THREE_SOURCES = [
+    new URL('./vendor/three.module.js', SITE_JS_DIR).href,
+    'https://unpkg.com/three@0.160.0/build/three.module.js',
+    'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+];
+
+async function importThree() {
+    const failures = [];
+    for (const url of THREE_SOURCES) {
+        try {
+            const mod = await import(url);
+            if (url.includes('/vendor/')) {
+                console.log('✅ three.js 使用本地副本 (js/vendor/three.module.js)');
+            } else {
+                console.warn(`⚠️ three.js 本地副本不可用，已回退到 CDN：${url}`);
+            }
+            return mod;
+        } catch (err) {
+            failures.push(`  - ${url} → ${err.message}`);
+        }
+    }
+    throw new Error('three.js 所有来源均加载失败：\n' + failures.join('\n'));
+}
+
+// ---------- JSZip：本地优先 + CDN 兜底 ----------
+const JSZIP_SOURCES = [
+    new URL('./vendor/jszip.min.js', SITE_JS_DIR).href,
+    'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+    'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',
+];
+
+function injectScript(url) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error(`脚本加载失败 ${url}`));
+        document.head.appendChild(s);
+    });
+}
+
+let jsZipPromise = null;
+function getJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);   // 页面里已有 <script> 版本
+    if (jsZipPromise) return jsZipPromise;
+    jsZipPromise = (async () => {
+        const failures = [];
+        for (const url of JSZIP_SOURCES) {
+            try {
+                await injectScript(url);
+                if (window.JSZip) return window.JSZip;
+                failures.push(`  - ${url} → 加载成功但未定义 window.JSZip`);
+            } catch (err) {
+                failures.push(`  - ${url} → ${err.message}`);
+            }
+        }
+        console.error('[mc-block] JSZip 所有来源均加载失败：\n' + failures.join('\n'));
+        return null;
+    })();
+    return jsZipPromise;
+}
+
+// ---------- 全局依赖（three 失败时不阻断元素注册，改为页面内可见报错） ----------
+let THREE = null;
+let threeLoadError = null;
+try {
+    THREE = await importThree();
+} catch (err) {
+    threeLoadError = err;
+    console.error('[mc-block] three.js 加载失败，方块将显示为错误占位：', err);
+}
 
 // ---------- 常量 ----------
-const DEFAULT_PACK = '26.2-Fabric 0.19.3';
-const ZIP_BASE_PATH = '/mc_textures/';          // ZIP 存放目录
+// 默认用精简包（tools/build-mini-pack.mjs 生成，仅含站点实际用到的资源，约 31 KB），
+// 完整材质包留作兜底：精简包里找不到的方块会自动去完整包里取。
+const DEFAULT_PACK = 'mini-26.2';
+const FALLBACK_PACK = '26.2-Fabric 0.19.3';
+const PACK_MAX_ATTEMPTS = 3;   // zip 下载/解析失败时的重试次数
 
 // ---------- 材质包缓存 ----------
 const packCache = new Map(); // 键: packName, 值: { zipFile, loaded, promise }
@@ -21,9 +108,31 @@ function getPackCache(packName) {
             zipFile: null,
             loaded: false,
             promise: null,
+            lastError: null,
+            bytes: 0,
         });
     }
     return packCache.get(packName);
+}
+
+// 下载 + 解压一个材质包。下载被中断时 blob 会是 0 字节或短一截，
+// JSZip 只会抛出难懂的 "Corrupted zip ?"，这里提前给出明确原因。
+async function fetchPack(JSZip, packName) {
+    const zipUrl = `${ZIP_BASE_PATH}${encodeURIComponent(packName)}.zip`;
+    const response = await fetch(zipUrl, { cache: 'no-cache' });
+    if (!response.ok) {
+        throw new Error(`材质包请求失败 HTTP ${response.status}：${zipUrl}`);
+    }
+    const declared = Number(response.headers.get('content-length') || 0);
+    const blob = await response.blob();
+    if (blob.size === 0) {
+        throw new Error(`材质包下载为空（0 字节），连接可能被中断：${zipUrl}`);
+    }
+    if (declared && blob.size !== declared) {
+        throw new Error(`材质包下载不完整：${blob.size}/${declared} 字节`);
+    }
+    const zip = await JSZip.loadAsync(blob);
+    return { zip, bytes: blob.size };
 }
 
 async function loadPack(packName) {
@@ -33,18 +142,35 @@ async function loadPack(packName) {
 
     cache.promise = (async () => {
         try {
-            const zipUrl = `${ZIP_BASE_PATH}${encodeURIComponent(packName)}.zip`;
-            const response = await fetch(zipUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const blob = await response.blob();
-            const zip = await JSZip.loadAsync(blob);
-            cache.zipFile = zip;
-            cache.loaded = true;
-            console.log(`✅ 材质包 "${packName}" 加载成功，共 ${Object.keys(zip.files).length} 个文件`);
+            const JSZip = await getJSZip();
+            if (!JSZip) {
+                throw new Error('JSZip 不可用：本地 js/vendor/jszip.min.js 与备用 CDN 均加载失败');
+            }
+
+            let lastErr = null;
+            for (let attempt = 1; attempt <= PACK_MAX_ATTEMPTS; attempt++) {
+                try {
+                    const { zip, bytes } = await fetchPack(JSZip, packName);
+                    cache.zipFile = zip;
+                    cache.loaded = true;
+                    cache.lastError = null;
+                    cache.bytes = bytes;
+                    console.log(`✅ 材质包 "${packName}" 加载成功：${Object.keys(zip.files).length} 个文件 / ${(bytes / 1024).toFixed(1)} KB`);
+                    return;
+                } catch (err) {
+                    lastErr = err;
+                    if (attempt < PACK_MAX_ATTEMPTS) {
+                        console.warn(`⚠️ 材质包 "${packName}" 第 ${attempt} 次加载失败，准备重试：${err.message}`);
+                        await new Promise(r => setTimeout(r, 400 * attempt));
+                    }
+                }
+            }
+            throw lastErr;
         } catch (err) {
             console.error(`❌ 材质包 "${packName}" 加载失败，将回退到 HTTP 加载`, err);
             cache.loaded = false;
             cache.zipFile = null;
+            cache.lastError = err.message;
         } finally {
             cache.promise = null;
         }
@@ -58,16 +184,39 @@ async function readFromPack(packName, path, type = 'string') {
     if (!cache.loaded || !cache.zipFile) {
         throw new Error(`材质包 "${packName}" 未加载或加载失败`);
     }
-    const file = cache.zipFile.file(path);
-    if (!file) {
-        throw new Error(`材质包 "${packName}" 中找不到文件: ${path}`);
+    // 1. 直接尝试原路径
+    let file = cache.zipFile.file(path);
+    if (file) return file.async(type);
+
+    // 2. 尝试常见顶层目录（去掉可能的 packName 前缀）
+    const possiblePrefixes = [
+        '', // 已经尝试过
+        `${packName}/`,
+        `${packName.replace(/ /g, '_')}/`, // 有时空格被替换
+    ];
+    for (const prefix of possiblePrefixes) {
+        if (prefix && path.startsWith(prefix)) continue; // 避免重复
+        const altPath = prefix + path;
+        file = cache.zipFile.file(altPath);
+        if (file) return file.async(type);
     }
-    return file.async(type);
+    // 3. 如果还找不到，遍历所有文件路径，查找以 'assets/minecraft/models/' 结尾的匹配
+    //    这是一种 fallback，性能稍差，但可靠
+    const allFiles = Object.keys(cache.zipFile.files);
+    const matchingPath = allFiles.find(f => f.endsWith(path));
+    if (matchingPath) {
+        file = cache.zipFile.file(matchingPath);
+        if (file) return file.async(type);
+    }
+
+    throw new Error(`材质包 "${packName}" 中找不到文件: ${path}`);
 }
 
 // ---------- 工具函数 ----------
+// 仅在真的把材质包解包到 mc_textures/<包名>/ 时才可用；
+// 仓库里默认只放 zip，所以这条回退路径基本只作为“理论上存在”的兜底。
 function getAssetsRoot(packName) {
-    return `/mc_textures/${packName}/assets/minecraft`;
+    return `${ZIP_BASE_PATH}${encodeURIComponent(packName)}/assets/minecraft`;
 }
 
 function getModelUrl(packName, modelPath) {
@@ -101,7 +250,7 @@ function createErrorTexture() {
     ctx.fillRect(8, 8, 8, 8);
     return new THREE.CanvasTexture(canvas);
 }
-const ERROR_TEXTURE = createErrorTexture();
+const ERROR_TEXTURE = THREE ? createErrorTexture() : null;
 
 // ---------- 颜色图 ----------
 async function loadColormap(packName, type) {
@@ -185,26 +334,37 @@ async function loadTexture(packName, textureRef, tintType = null) {
         let blobUrl = null;
         try {
             const cache = getPackCache(packName);
-            // 如果材质包加载成功，优先从ZIP读取
             if (cache.loaded && cache.zipFile) {
                 try {
                     const blob = await readFromPack(packName, zipPath, 'blob');
                     blobUrl = URL.createObjectURL(blob);
                     img = await loadImage(blobUrl);
                 } catch (zipErr) {
-                    // ZIP读取失败，回退HTTP
                     console.warn(`ZIP读取纹理失败 ${zipPath}，回退HTTP`, zipErr);
                     const url = getTextureUrl(packName, textureRef);
                     img = await loadImage(url);
                 }
             } else {
-                // 材质包未加载，直接HTTP
                 const url = getTextureUrl(packName, textureRef);
                 img = await loadImage(url);
             }
 
+            // ===== 新增：裁剪为 16x16 =====
+            let imgSource = img;
+            if (img.width !== 16 || img.height !== 16) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 16;
+                canvas.height = 16;
+                const ctx = canvas.getContext('2d');
+                // 取左上角 16x16 区域
+                ctx.drawImage(img, 0, 0, 16, 16, 0, 0, 16, 16);
+                imgSource = canvas;
+                // 注意：如果后续有颜色图处理，使用 imgSource 作为图像源
+            }
+
+            // 如果不需要染色，直接使用 imgSource
             if (!tintType) {
-                const texture = new THREE.CanvasTexture(img);
+                const texture = new THREE.CanvasTexture(imgSource);
                 texture.magFilter = THREE.NearestFilter;
                 texture.minFilter = THREE.NearestFilter;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -212,13 +372,14 @@ async function loadTexture(packName, textureRef, tintType = null) {
                 return texture;
             }
 
+            // 染色逻辑：使用 imgSource（已裁剪）
             const tint = await loadColormap(packName, tintType);
             const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = 16;
+            canvas.height = 16;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(imgSource, 0, 0, 16, 16);  // 直接绘制 16x16 图像
+            const imageData = ctx.getImageData(0, 0, 16, 16);
             const data = imageData.data;
             for (let i = 0; i < data.length; i += 4) {
                 data[i] = Math.min(255, data[i] * tint.r);
@@ -235,7 +396,7 @@ async function loadTexture(packName, textureRef, tintType = null) {
         } catch (err) {
             console.warn(`纹理加载失败: ${textureRef} (材质包 ${packName})，使用错误纹理`, err);
             if (blobUrl) URL.revokeObjectURL(blobUrl);
-            return ERROR_TEXTURE.clone();
+            return ERROR_TEXTURE ? ERROR_TEXTURE.clone() : null;
         }
     })();
 
@@ -316,7 +477,7 @@ async function loadModel(packName, blockId) {
 }
 
 // ---------- 几何体生成 ----------
-function createFaceGeometry(faceDir, from, to, uv) {
+function createFaceGeometry(faceDir, from, to, uv, rotation) {
     const min = new THREE.Vector3().fromArray(from).multiplyScalar(1 / 16);
     const max = new THREE.Vector3().fromArray(to).multiplyScalar(1 / 16);
     let vertices;
@@ -353,14 +514,44 @@ function createFaceGeometry(faceDir, from, to, uv) {
             ]; break;
         default: return null;
     }
+
+    // ---- 处理 UV 旋转 ----
+    if (!uv) uv = [0, 0, 16, 16];
+    let [u1, v1, u2, v2] = uv;
+    // 归一化到 0-1
+    u1 /= 16; v1 /= 16; u2 /= 16; v2 /= 16;
+    // 四个角点：顺序与 vertices 对应
+    let uvPoints = [
+        [u1, v1], // 顶点0
+        [u2, v1], // 顶点1
+        [u2, v2], // 顶点2
+        [u1, v2]  // 顶点3
+    ];
+
+    // 如果有旋转，应用旋转（围绕中心 0.5,0.5）
+    if (rotation && rotation !== 0) {
+        const angle = rotation * Math.PI / 180;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        uvPoints = uvPoints.map(([u, v]) => {
+            const du = u - 0.5;
+            const dv = v - 0.5;
+            return [
+                0.5 + du * cos - dv * sin,
+                0.5 + du * sin + dv * cos
+            ];
+        });
+    }
+
+    // 展平为数组
+    const uvs = uvPoints.flat();
+
+    // 构建几何体
     const geom = new THREE.BufferGeometry();
     const pos = [];
     vertices.forEach(v => pos.push(...v));
     geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geom.setIndex([0, 1, 2, 0, 2, 3]);
-    if (!uv) uv = [0, 0, 16, 16];
-    const [u1, v1, u2, v2] = uv;
-    const uvs = [u1/16, v1/16, u2/16, v1/16, u2/16, v2/16, u1/16, v2/16];
     geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geom.computeVertexNormals();
     return geom;
@@ -368,7 +559,21 @@ function createFaceGeometry(faceDir, from, to, uv) {
 
 // ---------- 场景构建 ----------
 async function buildBlockScene(packName, blockId) {
-    const modelData = await loadModel(packName, blockId);
+    await loadPack(packName);
+    let modelData = await loadModel(packName, blockId);
+
+    // 精简默认包里没有这个方块时，自动回退到完整材质包，
+    // 这样往页面里加新方块不会因为精简包没收录而直接变成错误占位。
+    if (!modelData.elements && packName !== FALLBACK_PACK) {
+        console.info(`ℹ️ 精简包 "${packName}" 中没有 "${blockId}"，改用完整材质包 "${FALLBACK_PACK}"`);
+        await loadPack(FALLBACK_PACK);
+        const fallbackData = await loadModel(FALLBACK_PACK, blockId);
+        if (fallbackData.elements) {
+            modelData = fallbackData;
+            packName = FALLBACK_PACK;   // 纹理也一并从完整包取
+        }
+    }
+
     if (!modelData.elements) {
         console.warn(`方块 ${blockId} (材质包 ${packName}) 没有 elements，显示错误占位`);
         return null;
@@ -416,7 +621,8 @@ async function buildBlockScene(packName, blockId) {
                 console.warn(`纹理变量 ${texVar} 未定义，跳过该面`);
                 continue;
             }
-            const geom = createFaceGeometry(faceDir, from, to, faceData.uv);
+            const rotation = faceData.rotation || 0;
+            const geom = createFaceGeometry(faceDir, from, to, faceData.uv, rotation);
             if (!geom) continue;
             const texture = await texturePromise;
             const material = new THREE.MeshLambertMaterial({
@@ -553,6 +759,15 @@ class BlockElement extends HTMLElement {
         this._renderRequested = false;
         if (!this._blockId) return;
 
+        // three.js 整体不可用时，给出可见的错误占位而不是静默空白
+        if (!THREE) {
+            const w = this.clientWidth || 36;
+            const h = this.clientHeight || 36;
+            this.showErrorBlock(w, h, 'three.js 加载失败：'
+                + (threeLoadError ? threeLoadError.message : '未知原因'));
+            return;
+        }
+
         const width = this.clientWidth || 36;
         const height = this.clientHeight || 36;
         if (width === 0 || height === 0) {
@@ -580,7 +795,10 @@ class BlockElement extends HTMLElement {
         try {
             const group = await buildBlockScene(this._packName, this._blockId);
             if (!group) {
-                this.showErrorBlock(width, height);
+                const packErr = getPackCache(this._packName).lastError;
+                this.showErrorBlock(width, height, packErr
+                    ? `材质包 "${this._packName}" 加载失败：${packErr}`
+                    : `模型 "${this._blockId}" 缺少 elements（材质包 "${this._packName}"）`);
                 return;
             }
 
@@ -618,13 +836,22 @@ class BlockElement extends HTMLElement {
             this._scene = scene;
             this._renderer = renderer;
             this._camera = camera;
+
+            // 成功标记：便于页面/自动化检查，也方便线上排障
+            this.dataset.rendered = 'true';
+            delete this.dataset.error;
+            this.title = '';
         } catch (e) {
             console.error(`渲染方块 ${this._blockId} (材质包 ${this._packName}) 失败:`, e);
-            this.showErrorBlock(width, height);
+            this.showErrorBlock(width, height, '渲染异常：' + e.message);
         }
     }
 
-    showErrorBlock(w, h) {
+    showErrorBlock(w, h, reason) {
+        // 把失败原因挂到元素上：鼠标悬停即可看到，右键检查也能直接读到
+        this.title = reason || '方块渲染失败';
+        this.dataset.error = reason || 'unknown';
+        delete this.dataset.rendered;
         const canvas = this._canvas;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -641,5 +868,20 @@ class BlockElement extends HTMLElement {
 if (!customElements.get('mc-block')) {
     customElements.define('mc-block', BlockElement);
 }
+
+// ---------- 线上排障入口 ----------
+// 部署后在浏览器控制台执行 __mcBlockDiag()，可立刻看到依赖来源与材质包状态。
+window.__mcBlockDiag = () => ({
+    three: THREE ? `three r${THREE.REVISION || '?'}（已加载）`
+                 : `加载失败：${threeLoadError ? threeLoadError.message : '未知'}`,
+    jszip: window.JSZip ? '已加载' : '未加载（会走 CDN 兜底）',
+    zipBasePath: ZIP_BASE_PATH,
+    packs: [...packCache.entries()].map(([name, c]) => ({
+        name,
+        loaded: c.loaded,
+        bytes: c.bytes,
+        error: c.lastError,
+    })),
+});
 
 export { loadPack, loadModel, loadTexture, DEFAULT_PACK };

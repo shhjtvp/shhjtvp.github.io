@@ -5,19 +5,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>红蘑菇hj - 首页</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- JSZip 本地化：不再依赖 cdnjs（CDN 不可达会让所有方块退化成“材质缺失”） -->
+    <script src="js/vendor/jszip.min.js"></script>
     <style>
-        
-        .item {
+        /* ---------- 首页专用动效增强 ---------- */
+
+        /* 首页标题入场 */
+        .hero-title {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: heroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+        }
+        .hero-sub {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.25s forwards;
+        }
+
+        @keyframes heroIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 方块卡片网格 — 交错入场 */
+        .block-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem 3rem;
+            margin: 2rem 0 1rem;
+        }
+        .block-item {
+            opacity: 0;
+            transform: translateY(40px) scale(0.96);
+            animation: blockIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                        filter 0.3s ease,
+                        box-shadow 0.3s ease;
+            cursor: default;
             text-align: center;
-            font-size: 14px;
+        }
+        .block-item:hover {
+            transform: translateY(-6px) scale(1.02);
+            filter: brightness(1.08);
+        }
+        .block-item .label {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.3rem;
+            transition: color 0.25s;
+        }
+        .block-item:hover .label {
+            color: #fff;
+        }
+
+        /* 交错延迟 */
+        .block-item:nth-child(1) {
+            animation-delay: 0.10s;
+        }
+        .block-item:nth-child(2) {
+            animation-delay: 0.18s;
+        }
+        .block-item:nth-child(3) {
+            animation-delay: 0.26s;
+        }
+        .block-item:nth-child(4) {
+            animation-delay: 0.34s;
+        }
+        .block-item:nth-child(5) {
+            animation-delay: 0.42s;
+        }
+        .block-item:nth-child(6) {
+            animation-delay: 0.50s;
+        }
+
+        @keyframes blockIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 首页描述文字悬浮微动 */
+        .hero-sub {
+            display: inline-block;
+            transition: transform 0.4s ease;
+        }
+        .hero-sub:hover {
+            transform: translateX(4px);
+        }
+
+        /* 首页卡片分割线动效 */
+        .home-divider {
+            width: 60px;
+            height: 2px;
+            background: var(--accent);
+            margin: 0.6rem auto 1.8rem;
+            border-radius: 2px;
+            opacity: 0;
+            animation: dividerIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.45s forwards;
+            transform: scaleX(0);
+            transform-origin: center;
+        }
+        @keyframes dividerIn {
+            from {
+                opacity: 0;
+                transform: scaleX(0);
+            }
+            to {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+        }
+
+        /* 底部信息微动 */
+        .footer-note {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .footer-note:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .block-grid {
+                gap: 1.5rem;
+            }
+            .block-item {
+                animation-duration: 0.5s;
+            }
         }
     </style>
 </head>
 <body>
     <!-- ========== 全局导航栏 ========== -->
     <nav class="global-nav">
-        <div class="nav-brand"><i mg src="mc_textures\26.2-Fabric 0.19.3\assets\minecraft\textures\block\red_mushroom.png" width="200%" class="pixel-art">红蘑菇hj</div>
+        <div class="nav-brand">红蘑菇hj</div>
         <ul class="nav-links">
             <li><a href="index.html" class="active">首页</a></li>
             <li><a href="maps">地图展示</a></li>
@@ -26,41 +160,144 @@
         </ul>
     </nav>
 
-    首页还未完成...
+    <!-- ========== 首页主内容 ========== -->
+    <main class="main-content" style="text-align:center; padding-top:1rem;">
 
-        <div class="item">
-            <mc-block size="480px">grass_block</mc-block>
-            <div>草方块</div>
-        </div>
-        <div class="item">
-            <mc-block size="360px">diamond_block</mc-block>
-            <div>钻石块</div>
-        </div>
-        <div class="item">
-            <mc-block size="240px">soul_campfire</mc-block>
-            <div>灵魂营火</div>
-        </div>
-        <div class="item">
-            <mc-block size="120px">oak_leaves</mc-block>
-            <div>橡树叶 (带颜色图)</div>
-        </div>
-        <div class="item">
-            <mc-block size="500px">dandelion</mc-block>
-            <div>蒲公英 (cross 模型)</div>
-        </div>
-        <div class="item">
-            <mc-block size="360px">damaged_anvil</mc-block>
-            <div>损坏的铁砧</div>
+        <h1 class="hero-title" style="font-size:2.6rem; font-weight:300; letter-spacing:1px; color:var(--accent); margin-bottom:0.2rem;">
+            ⚡ 红蘑菇hj
+        </h1>
+        <div class="home-divider"></div>
+        <p class="hero-sub" style="color:#b0b0c8; font-size:1.1rem; max-width:500px; margin:0 auto 0.8rem;">
+            这些方块模型都是实时渲染的，相当于一个材质包加载器
+        </p>
+
+        <!-- 方块卡片网格 -->
+        <div class="block-grid">
+            <div class="block-item">
+                <mc-block size="480px">grass_block</mc-block>
+                <div class="label">草方块</div>
+            </div>
+            <div class="block-item">
+                <mc-block size="360px">diamond_block</mc-block>
+                <div class="label">钻石块</div>
+            </div>
+            <div class="block-item">
+                <mc-block size="240px">soul_campfire</mc-block>
+                <div class="label">灵魂营火 (这到底怎么修啊)</div>
+            </div>
+            <div class="block-item">
+                <mc-block size="120px">oak_leaves</mc-block>
+                <div class="label">橡树叶 (带颜色图)</div>
+            </div>
+            <div class="block-item">
+                <mc-block size="500px">dandelion</mc-block>
+                <div class="label">蒲公英 (cross 模型)</div>
+            </div>
+            <div class="block-item">
+                <mc-block size="360px">damaged_anvil</mc-block>
+                <div class="label">损坏的铁砧</div>
+            </div>
         </div>
 
-    
+        <!-- 额外小彩蛋：微动提示 -->
+        <p style="color:#555; font-size:0.75rem; margin-top:1.2rem; letter-spacing:0.5px; user-select:none; transition:color 0.3s;" 
+           onmouseenter="this.style.color='#888'" onmouseleave="this.style.color='#555'">
+            ✦ 悬停方块有轻微上浮 ✦
+        </p>
+
+    </main>
 
     <!-- ========== 全局页脚 ========== -->
     <footer class="global-footer">
-        <p>© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 使用 marked.js / highlight.js / Giscus</p>
+        <p class="footer-note">© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 使用 marked.js / highlight.js / Giscus</p>
     </footer>
 
+    <!-- ========== 依赖脚本 ========== -->
     <script type="module" src="js/minecraft.js"></script>
+
+    <!-- ========== 页面切换过渡（所有页面共用） ========== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ---- 页面入场 ----
+            // body 已在 style.css 中定义了 pageEnter 动画，此处无需额外操作
+
+            // ---- 页面出场：拦截内部链接，触发淡出再跳转 ----
+            const EXIT_DELAY = 350; // ms，与 CSS 动画时长匹配
+
+            function isInternalLink(href) {
+                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return false;
+                // 相对路径或同源绝对路径
+                const a = document.createElement('a');
+                a.href = href;
+                // 如果 host 为空（相对路径）或与当前 host 相同，视为内部链接
+                return !a.host || a.host === window.location.host;
+            }
+
+            function handleLinkClick(e) {
+                const target = e.currentTarget;
+                const href = target.getAttribute('href');
+                if (!isInternalLink(href)) return;
+
+                e.preventDefault();
+
+                // 如果已经处于退出状态，不重复触发
+                if (document.body.classList.contains('page-exit')) return;
+
+                // 触发退出动画
+                document.body.classList.add('page-exit');
+
+                // 延迟后跳转
+                setTimeout(() => {
+                    window.location.href = href;
+                }, EXIT_DELAY);
+            }
+
+            // 绑定所有内部链接（包括动态生成的链接，使用事件委托）
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a[href]');
+                if (!link) return;
+                // 只处理内部链接
+                const href = link.getAttribute('href');
+                if (!isInternalLink(href)) return;
+                // 如果链接有 target="_blank" 或 rel="external"，不拦截
+                if (link.target === '_blank' || link.getAttribute('rel') === 'external') return;
+                // 如果已经处于退出状态，不重复触发
+                if (document.body.classList.contains('page-exit')) return;
+
+                e.preventDefault();
+
+                // 触发退出动画
+                document.body.classList.add('page-exit');
+
+                setTimeout(() => {
+                    window.location.href = href;
+                }, EXIT_DELAY);
+            });
+
+            // ---- 如果用户使用浏览器的前进/后退，移除退出状态 ----
+            window.addEventListener('pageshow', function(e) {
+                document.body.classList.remove('page-exit');
+                // 重新触发入场动画：移除再添加
+                document.body.style.animation = 'none';
+                // 强制回流
+                void document.body.offsetHeight;
+                document.body.style.animation = '';
+            });
+
+            // ---- 对于通过 JS 动态跳转的情况（如 template.html 中的导航），提供一个辅助函数 ----
+            window.__navigateTo = function(url) {
+                if (document.body.classList.contains('page-exit')) return;
+                document.body.classList.add('page-exit');
+                setTimeout(() => {
+                    window.location.href = url;
+                }, EXIT_DELAY);
+            };
+
+            console.log('✨ 页面切换过渡已启用 (红蘑菇hj)');
+        })();
+    </script>
 
 </body>
 </html>
