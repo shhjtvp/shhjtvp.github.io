@@ -8,12 +8,12 @@
     --bg-dark: #000000;
     --bg-panel: #222240;
     --bg-nav: #0d0d1a;
-    --text-primary: #e0e0e0;
+    --text-primary: #fffdfd;
     --text-muted: #999;
     --accent: #cb4e4e;
     --accent-hover: #a83d3d;
-    --border-color: #3a3a5a;
-    --slot-bg: #2a2a40;
+    --border-color: #5a3a3a;
+    --slot-bg: #402a2a;
     --slot-border: #555;
     --max-width: 1100px;
     --nav-height: 56px;
@@ -40,17 +40,17 @@ body {
 
 /* ---------- 全局导航栏 ---------- */
 .global-nav {
-    background: var(--bg-nav);
+    background: #222240cc;
     height: var(--nav-height);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 1.5rem;
-    border-bottom: 2px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 100;
     flex-shrink: 0;
+    box-shadow: 10px 10px 10px #222240;
 }
 .nav-brand {
     font-weight: 700;
@@ -339,7 +339,7 @@ body {
         right: -40px;
     }
     .mc-crafting-result {
-        right: -80px;
+        right: -88px;
         width: 44px;
         height: 44px;
     }
@@ -420,4 +420,162 @@ body {
     padding: 0.1rem 0.4rem;
     border-radius: 3px;
     font-size: 0.85em;
+}
+
+/* ============================================================
+   页面切换过渡
+   index.html / collections.html 等页面会拦截站内链接，
+   给 body 加上 .page-exit 再延迟跳转，这里提供配套动画。
+   ============================================================ */
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    animation: pageEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.page-exit {
+    animation: none;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body {
+        animation: none;
+    }
+    body.page-exit {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   Minecraft 风格 UI 组件
+   （此前 .mc-panel / .mc-btn / .mc-tag / .mc-crafting-* 只被页面
+     和媒体查询引用，样式定义在重构中丢失，这里补回）
+   ============================================================ */
+
+/* ---------- 面板 ---------- */
+.mc-panel {
+    background: var(--bg-panel);
+    border: 2px solid var(--border-color);
+    border-top-color: #7a5a5a;
+    border-left-color: #7a5a5a;
+    border-radius: 6px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.5rem 0;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.mc-panel h3 {
+    color: var(--accent);
+    font-size: 1.05rem;
+    margin-bottom: 0.6rem;
+}
+.mc-panel p {
+    color: #b8b8cc;
+    font-size: 0.92rem;
+}
+
+/* ---------- 按钮（MC 立体边框 + 按下位移） ---------- */
+.mc-btn {
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+    background: #4a4a6a;
+    border: 2px solid #000;
+    border-top-color: #8a8ab0;
+    border-left-color: #8a8ab0;
+    border-radius: 4px;
+    padding: 0.5rem 1.3rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.08s;
+}
+.mc-btn:hover {
+    background: #5a5a80;
+}
+.mc-btn:active {
+    transform: translateY(2px);
+    border-top-color: #000;
+    border-left-color: #000;
+    border-bottom-color: #8a8ab0;
+    border-right-color: #8a8ab0;
+}
+.mc-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ---------- 标签 ---------- */
+.mc-tag {
+    display: inline-block;
+    background: #3a3a5a;
+    border: 1px solid var(--border-color);
+    color: #cfcfe0;
+    font-size: 0.72rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    margin: 0 0.35rem 0.35rem 0;
+    vertical-align: middle;
+}
+
+/* ---------- 合成表 ---------- */
+.mc-crafting {
+    position: relative;
+    display: inline-block;
+    margin: 1.2rem 7.5rem 1.2rem 0;
+}
+.mc-crafting-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(3, 56px);
+    gap: 4px;
+    background: #2a2a44;
+    border: 2px solid var(--border-color);
+    padding: 4px;
+    border-radius: 4px;
+}
+.mc-crafting-slot,
+.mc-crafting-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--slot-bg);
+    border: 2px solid #000;
+    border-right-color: #6a4a4a;
+    border-bottom-color: #6a4a4a;
+    border-radius: 3px;
+    font-size: 1.1rem;
+    color: #e0e0e0;
+}
+.mc-crafting-arrow {
+    position: absolute;
+    top: 50%;
+    right: -44px;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+.mc-crafting-result {
+    position: absolute;
+    top: 50%;
+    right: -108px;
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+}
+
+@media (max-width: 600px) {
+    .mc-crafting {
+        margin-right: 5.5rem;
+    }
 }

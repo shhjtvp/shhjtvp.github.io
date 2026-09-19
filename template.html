@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档 - ο(=•ω＜=)ρ⌒☆</title>
-    <!-- highlight.js 样式 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- highlight.js 样式（本地优先，避免 CDN 被墙导致文档变白板） -->
+    <link rel="stylesheet" href="js/vendor/atom-one-dark.min.css">
     <!-- mcfunction-highlight 样式 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mcfunction-highlight/dist/mcfunction-highlight.min.css">
+    <link rel="stylesheet" href="js/vendor/mcfunction-highlight.min.css">
     <!-- 全局样式（与站点一致） -->
     <link rel="stylesheet" href="css/style.css">
     <!-- 文档页专用补充样式（树形菜单、导航按钮等） -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="js/minecraft.js"></script>
+    <script src="js/vendor/jszip.min.js"></script>
+    <!-- 必须是 module：minecraft.js 内部用 import 加载 three.js，当成普通脚本会直接语法报错 -->
+    <script type="module" src="js/minecraft.js"></script>
     <style>
         /* ---------- 树形侧边栏样式 ---------- */
         .tree-root {
@@ -41,11 +42,11 @@
         }
         /* 文件夹图标：展开状态用 📂，折叠状态用 📁 */
         .tree-folder > span::before {
-            content: "📂 ";
+            content: "◆⌟  ";
             transition: transform 0.2s;
         }
         .tree-folder.collapsed > span::before {
-            content: "📁 ";
+            content: "◇⌝  ";
         }
         .tree-folder.collapsed > ul {
             display: none;
@@ -66,7 +67,7 @@
             color: #fff;
         }
         .sidebar-link.active {
-            background: rgba(78, 203, 113, 0.2);
+            background: rgba(203, 78, 78, 0.2);
             color: var(--accent, #cb4e4e);
             font-weight: 600;
         }
@@ -94,7 +95,7 @@
         }
 
         .doc-content tr:nth-child(even) {
-            background-color: #3a201e0e;
+            background-color: #3a1e1e0e;
         }
         .doc-content tr:nth-child(odd) {
             background-color: #4022220e;
@@ -110,7 +111,7 @@
             justify-content: space-between;
             margin-top: 2.5rem;
             padding-top: 1rem;
-            border-top: 1px solid var(--border-color, #3a3a5a);
+            border-top: 1px solid var(--border-color, #5a3a3a);
         }
         .doc-nav a {
             display: inline-block;
@@ -123,7 +124,7 @@
             border: 1px solid var(--border-color, #5a3a3a);
         }
         .doc-nav a:hover:not(.disabled) {
-            background: var(--accent, #cb4e4e);
+            background: var(--accent, #222240);
             color: #000;
         }
         .doc-nav a:active:not(.disabled) {
@@ -162,8 +163,8 @@
         <div class="nav-brand">红蘑菇hj</div>
         <ul class="nav-links">
             <li><a href="index.html">首页</a></li>
-            <li><a href="maps.html">地图展示</a></li>
-            <li><a href="mods.html">MOD 下载</a></li>
+            <li><a href="maps/">地图展示</a></li>
+            <li><a href="mods/">MOD 下载</a></li>
             <li><a href="collections.html" class="active">文档</a></li>
         </ul>
     </nav>
@@ -216,11 +217,10 @@
         <p>© 2026 红蘑菇hj | 基于 GitHub Pages 构建 | 文档由 marked.js 渲染</p>
     </footer>
 
-    <!-- ========== 依赖脚本（CDN） ========== -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mcfunction-highlight/dist/mcfunction-highlight.min.js">
-    </script>
+    <!-- ========== 依赖脚本（已本地化为 js/vendor/，不依赖外部 CDN） ========== -->
+    <script src="js/vendor/marked.min.js"></script>
+    <script src="js/vendor/highlight.min.js"></script>
+    <script src="js/vendor/mcfunction-highlight.min.js"></script>
 
     <script>
         (function() {
