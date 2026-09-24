@@ -61,25 +61,26 @@
     </nav>
 
     <main class="main-content">
-        <h1>📦 MOD 下载</h1>
-        <p>通过 Modrinth API 获取 MOD 版本列表。</p>
+        <div class="page-head">
+            <h1>MOD</h1>
+            <p>在线查询 Modrinth 上的 MOD 版本，方便自己找下载</p>
+        </div>
 
-        <!-- Modrinth API 演示区域 -->
         <div class="mc-panel" id="modrinth-section">
-            <h3>🔍 查询 Modrinth 项目版本</h3>
-            <p>输入 Modrinth 项目 ID（例如：<code>fabric-api</code>、<code>sodium</code>、<code>iris</code>）</p>
+            <h3>查询 Modrinth 项目版本</h3>
+            <p>输入 Modrinth 的项目 ID 或 slug，例如 <code>fabric-api</code>、<code>sodium</code>、<code>iris</code>。</p>
             <div class="modrinth-input-row">
-                <input type="text" id="project-id-input" placeholder="输入项目 ID 或 slug..." value="sodium">
+                <input type="text" id="project-id-input" placeholder="输入项目 ID 或 slug…" value="sodium">
                 <button id="fetch-versions-btn" class="mc-btn">获取版本列表</button>
             </div>
-            <div id="versions-loading" style="display:none;">⏳ 加载中...</div>
-            <div id="versions-error" style="display:none; color:#e74c3c;"></div>
+            <div id="versions-loading" class="status-line" style="display:none;">⏳ 加载中…</div>
+            <div id="versions-error" class="status-line is-error" style="display:none;"></div>
             <div id="versions-result"></div>
         </div>
     </main>
 
     <footer class="global-footer">
-        <p>© 2026 MC 站点 | 基于 GitHub Pages 构建 | MOD 数据来自 Modrinth API</p>
+        <p>© 2026 红蘑菇hj · 基于 GitHub Pages 构建 · MOD 数据来自 Modrinth API</p>
     </footer>
 
     <script>

@@ -82,7 +82,7 @@
 
         <!-- 卡片由下面的脚本读取 docs/collections.json 生成 -->
         <div id="collection-grid" class="collection-grid">
-            <p class="collection-status">⏳ 加载集合列表…</p>
+            <p class="status-line">⏳ 加载集合列表…</p>
         </div>
     </main>
 
@@ -107,7 +107,7 @@
             }
 
             function showStatus(text, isError) {
-                grid.innerHTML = `<p class="collection-status${isError ? ' is-error' : ''}">`
+                grid.innerHTML = `<p class="status-line${isError ? ' is-error' : ''}">`
                     + escapeHtml(text) + '</p>';
             }
 
