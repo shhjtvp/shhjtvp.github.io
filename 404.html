@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 · 页面不存在 - 红蘑菇hj</title>
+    <meta name="robots" content="noindex">
+    <!--
+        GitHub Pages 会用这个文件响应任意未知路径（例如 /a/b/c 也会返回本页）。
+        因此这里所有资源都必须写成绝对路径（/css/…、/js/…、/images/…），
+        否则浏览器会去请求 /a/b/css/style.css 而全部 404。
+    -->
+    <link rel="icon" href="/images/icon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .notfound {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+            text-align: center;
+        }
+
+        /* 缺省材质方块：就是 Minecraft 那张紫黑棋盘格「材质缺失」贴图，纯 CSS 画 */
+        .notfound__block {
+            width: 132px;
+            height: 132px;
+            margin: 0 auto 1.4rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background-color: #000;
+            background-image:
+                linear-gradient(45deg, #ff00ff 25%, transparent 25%, transparent 75%, #ff00ff 75%),
+                linear-gradient(45deg, #ff00ff 25%, transparent 25%, transparent 75%, #ff00ff 75%);
+            background-size: 32px 32px;
+            background-position: 0 0, 16px 16px;
+            box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6), 0 0 0 6px rgba(255, 0, 255, 0.06);
+            transform: rotate(-3deg);
+            animation: notFoundFloat 5s ease-in-out infinite;
+        }
+        @keyframes notFoundFloat {
+            0%, 100% { transform: rotate(-3deg) translateY(0); }
+            50%      { transform: rotate(2deg) translateY(-8px); }
+        }
+
+        .notfound__caption {
+            margin: 0 0 1.6rem;
+            font-size: 0.76rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.32);
+        }
+
+        .notfound__code {
+            margin: 0;
+            font-size: clamp(3.4rem, 12vw, 5.2rem);
+            font-weight: 200;
+            letter-spacing: 6px;
+            line-height: 1;
+            background: linear-gradient(120deg, #00aeef 0%, #ffffff 45%, #e8402f 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .notfound__text {
+            margin: 1.1rem 0 0.4rem;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        /* 把用户实际访问的路径显示出来，方便判断是不是打错了 */
+        .notfound__path {
+            display: inline-block;
+            max-width: 100%;
+            margin: 0.4rem 0 2rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-family: "Fira Code", "Consolas", monospace;
+            font-size: 0.82rem;
+            color: #9fe3ff;
+            background: rgba(0, 174, 239, 0.10);
+            border: 1px solid rgba(0, 174, 239, 0.18);
+            overflow-wrap: anywhere;
+        }
+
+        .notfound__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            justify-content: center;
+        }
+        .notfound__actions .mc-btn {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .notfound__block {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body class="has-nav">
+
+    <!-- ========== 全局导航栏（本页用绝对路径） ========== -->
+    <nav class="global-nav" id="globalNav">
+        <a class="nav-brand" href="/index.html" aria-label="红蘑菇hj · 回到首页">
+            <img src="/images/home/icon.png" alt="红蘑菇hj">
+        </a>
+
+        <ul class="nav-links">
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    MC<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link" href="/maps/">地图</a>
+                    <a class="nav-menu__link" href="/mods/">MOD</a>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    软件<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    作品<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+            <li class="nav-item">
+                <button class="nav-btn" type="button">
+                    文档<i class="nav-caret" aria-hidden="true"></i>
+                </button>
+                <div class="nav-menu">
+                    <a class="nav-menu__link" href="/collections.html">站点文档</a>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                    <span class="nav-menu__link is-placeholder">占位 · 子分类</span>
+                </div>
+            </li>
+        </ul>
+
+        <button class="nav-fab" type="button" aria-label="展开导航栏">
+            <img src="/images/home/icon.svg" alt="">
+        </button>
+    </nav>
+
+    <!-- ========== 内容 ========== -->
+    <main class="main-content">
+        <div class="notfound">
+            <div class="notfound__block" aria-hidden="true"></div>
+            <p class="notfound__caption">Missing Texture</p>
+
+            <h1 class="notfound__code">404</h1>
+            <p class="notfound__text">这个页面找不到 —— 就像材质包里缺了这张纹理。</p>
+            <code class="notfound__path" id="notFoundPath">/</code>
+
+            <div class="notfound__actions">
+                <a class="mc-btn" href="/index.html">回到首页</a>
+                <a class="mc-btn" href="/collections.html">翻翻文档</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========== 全局页脚 ========== -->
+    <footer class="global-footer">
+        <p>© 2026 红蘑菇hj · 基于 GitHub Pages 构建</p>
+    </footer>
+
+    <script src="/js/cursor.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+        // 把实际访问的路径显示出来，方便判断是不是打错了
+        document.getElementById('notFoundPath').textContent = location.pathname;
+    </script>
+</body>
+</html>
